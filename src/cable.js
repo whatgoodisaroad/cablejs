@@ -1,141 +1,368 @@
-var Cable = { };
-(function() {
-  var 
-    index = { },
-    keywords = [ "document", "event" ];
+var Cable = {};
 
-  Cable.get = function(fn) {
-    var 
-      inputs = _getInputs(fn),
-      values = [];
+var keywords = [ "result" ];
 
-    for (var i = 0; i < inputs.length; ++i) {
-      (function(i, k, v) {
-        values[i] = function() {
-          // Treat like get or set?
-          if (arguments.length) {
-            if (index[k].type === "data") {
-              index[k].value = arguments[0];
-              _trigger(k);
-            }
-            else {
-              throw "Error: cannot set node of type \'" + index[k].type + "\'";
-            }
-          }
-          else {
-            return v;
-          }
-        };
-      })(i, inputs[i], index[inputs[i]].value);
+var graph = { };
+
+function each(obj, fn) {
+  for (var key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      fn(obj[key], key);
     }
+  }
+};
 
-    fn.apply({ }, values);
-  };
+//  Find the argument names of a function.
+function getArgNames(fn) {
+  return (fn + "")
+    .match(/^function(\s+\S*)?\(([^)]+)\)/)[2]
+    .split(",")
+    .map(function(x) { return x.replace(/(^\s+)|(\s+$)/g, ""); });
+}
 
-  Cable.def = function(obj) {
-    for (var k in obj) {
-      if (obj.hasOwnProperty(k)) {
-        (function(k) {
+function getFanIn(fn, context) {
+  var result = getArgNames(fn)
+    .filter(function(arg) {
+      return keywords.indexOf(arg) == -1;
+    })
+    .map(function(arg) {
+      return arg.replace(/^_/, "");
+    });
 
-          if (index.hasOwnProperty(k)) {
-            throw "Error: Redefinition of \'" + k + "\'";
-          }
-
-          var d = obj[k];
-
-          //  If it's a function, treat it like a functor definition, otherwise
-          //  treat it like a normal data definition.
-          if (_isFunction(d)) {
-            var inputs = _getInputs(d);
-
-            if (inputs.indexOf("event") != -1) {
-              // Just setup the event. For now, events cannot accept data:
-
-              index[k] = {
-                type:"event",
-                value:null
-              };
-
-              d(function() {
-                index[k].value = new Date();
-                _trigger(k);
-              });
-            }
-            else {
-              index[k] = {
-                type:"functor",
-                value:null,
-                func:d
-              };
-            }
-          }
-          else if (d.type === "data") {
-            index[k] = {
-              type:"data",
-              value:d.value
-            };
-          }
-        })(k);
+  if (context) {
+    result = result.map(function(arg) {
+      if (arg === "main") {
+        return context;
       }
-    }
-
-    _reify();
-  };
-
-  Cable.mod = function(obj) {
-
-  };
-
-  Cable._debugGraph = function() {
-    for (var k in index) {
-      if (index.hasOwnProperty(k)) {
-        console.log(k, JSON.stringify(index[k]));
+      else {
+        return context + "_" + arg;
       }
-    }
-  };
-
-// Internals:
-////////////////////////////////////////////////////////////////////////////////
-
-  function _getInputs(fn) {
-    return (fn + "")
-      .match(/^function(\s+\S*)?\(([^)]+)\)/)[2]
-      .split(",")
-      .map(function(x) { return x.replace(/(^\s+)|(\s+$)/g, ""); });
+    });
   }
 
-  // Via http://stackoverflow.com/a/7356528/26626
-  function _isFunction(fn) {
-    var getType = {};
-    return fn && getType.toString.call(fn) === '[object Function]';
+  return result;
+}
+
+function getDependencies(fn, context) {
+  var result = getArgNames(fn)
+    .filter(function(arg) {
+      return keywords.indexOf(arg) == -1 && arg[0] != '_';
+    });
+
+  if (context) {
+    result = result.map(function(arg) {
+      if (arg === "main") {
+        return context;
+      }
+      else {
+        return context + "_" + arg;
+      }
+    });
   }
 
-  function _trigger(name) {
-    for (var i = 0; i < index[name].out.length; ++i) {
-      if (index[index[name].out[i]].type === "functor") {
-        Cable.get(index[index[name].out[i]].func);
-      }
-    }    
-  }
+  return result;
+}
 
-  function _reify() {
-    for (var k in index) {
-      if (index.hasOwnProperty(k)) {
-        index[k].out = [];
-      }
+// Via http://stackoverflow.com/a/7356528/26626
+function isFunction(fn) {
+  var getType = {};
+  return fn && getType.toString.call(fn) === '[object Function]';
+}
+
+//  The test for whether a function represents a synthetic cable is whether it 
+//  requests a result handler.
+function isSynthetic(fn) {
+  return getArgNames(fn).indexOf("result") != -1;
+}
+
+Cable.define = function(object, noReify) {
+  each(object, function(cable, name) {
+    if (keywords.indexOf(name) != -1) {
+      throw "Illegal definition: " + name + " is a reserved word.";
     }
 
-    for (var k in index) {
-      if (index.hasOwnProperty(k)) {
-        if (index[k].type === "functor") {
-          index[k].in = _getInputs(index[k].func);
-          for (var i = 0; i < index[k].in.length; ++i) {
-            index[index[k].in[i]].out.push(k);
-          }
+    if (graph[name]) {
+      throw "Illegal definition: " + name + " is already defined.";
+    }
+
+    var type = null;
+
+    if (cable.hasOwnProperty("type")) {
+      type = cable.type;
+    }
+    else if (isFunction(cable)) {
+      type = isSynthetic(cable) ? "synthetic" : "effect";
+    }
+    else {
+      type = "sub";
+      var newObj = { };
+      each(cable, function(subobj, subname) {
+        var newName = subname === "main" ? name : name + "_" + subname;
+        newObj[newName] = subobj;
+        newObj[newName].context = name;
+      });
+      Cable.define(newObj, true);
+    }
+
+    if (install.hasOwnProperty(type)) {
+      install[type](name, cable);
+    }
+    else if (type !== "sub") {
+      throw "Illegal definiton: could not determine meaning of " + name;
+    }
+  });
+
+  reify();
+};
+
+var install = {
+  data:function(name, obj) {
+    graph[name] = {
+      type:"data",
+      value:obj.value,
+
+      in:[],
+      out:[],
+
+      helpers:obj.helpers ? obj.helpers : { },
+
+      context:obj.context
+    };
+  },
+
+  synthetic:function(name, fn) {
+    graph[name] = {
+      type:"synthetic",
+      fn:fn,
+
+      value:null,
+      invoked:false,
+
+      in:getFanIn(fn, fn.context),
+      out:[],
+
+      resultIndex:getFanIn(fn).indexOf("result"),
+
+      context:fn.context
+    };
+  },
+
+  effect:function(name, fn) {
+    graph[name] = {
+      type:"effect",
+      fn:fn,
+
+      in:getFanIn(fn, fn.context),
+      out:[]
+      ,
+
+      context:fn.context
+    };
+  },
+
+  event:function(name, obj) {
+    graph[name] = {
+      type:"event",
+      value:null,
+
+      in:[],
+      out:[],
+
+      context:obj.context
+    };
+
+    obj.wireup(function(value) {
+      yield(name, function(setter) {
+        setter(value);
+      });
+    });
+  }
+};
+
+function reify() {
+  //  Pass 1: Clean all objects
+  each(graph, function(node) {
+    node.out = [];
+  });
+
+  //  Pass 2: Append dependencies
+  each(graph, function(node, nodeName) {
+    if (node.fn) {
+      getDependencies(node.fn, node.context).forEach(function(depName) {
+        if (graph.hasOwnProperty(depName)) {
+          graph[depName].out.push(nodeName);
         }
+        else if ( node.hasOwnProperty("context") &&
+                  graph.hasOwnProperty(node.context + "_" + depName)) {
+          graph[node.context + "_" + depName].out.push(nodeName);
+        }
+        else if ( node.hasOwnProperty("context") &&
+                  depName === "main" &&
+                  graph.hasOwnProperty(node.context)) {
+          graph[node.context].out.push(nodeName);
+        }
+        else {
+          throw "Reference to undefined node '" +
+            depName +
+            "' as dependency of '" +
+            nodeName +
+            "'" + 
+            (node.hasOwnProperty("context") ?
+              " in context '" + node.context + "'" :
+              "");
+        }
+      });
+    }
+  });
+}
+
+
+
+
+var yields = {
+  data:function(name, fn) {
+    var access = function() {
+      if (!arguments.length) {
+        return graph[name].value;
       }
+      else if (arguments[0] != graph[name].value) {
+        graph[name].value = arguments[0];
+        triggerDownstream(name);
+      }
+    };
+
+    each(graph[name].helpers, function(helper, helpName) {
+      access[helpName] = function() {
+        access(
+          helper.apply(
+            graph[name].value, 
+            arguments
+          )
+        );
+      };
+    });
+
+    fn(access);
+  },
+
+  synthetic:function(name, fn) {
+    if (graph[name].invoked) {
+      fn(graph[name].value);
+    }
+    else {
+      throw "TODO: invoke synthetic";
+    }
+  },
+
+  effect:function() { },
+
+  event:function(name, fn) {
+    fn(function() {
+      if (!arguments.length) {
+        return graph[name].value;
+      }
+      else if (arguments[0] != graph[name].value) {
+        graph[name].value = arguments[0];
+        triggerDownstream(name);
+      }
+    });
+  }
+};
+
+function yield(name, fn) {
+  yields[graph[name].type](name, fn);
+}
+
+function yieldAll(names, fn, prefix) {
+  if (prefix === undefined) { prefix = []; }
+
+  if (!names.length) {
+    fn(prefix);
+  }
+  else {
+    yield(names[0], function(value) {
+      yieldAll(names.slice(1), fn, prefix.concat([ value ]));
+    });
+  }
+}
+
+function evaluate(name, fn) {
+  evaluators[graph[name].type](name, fn);
+}
+
+var evaluators = {
+  data:yield.data,
+  event:yield.event,
+
+  synthetic:function(name, fn) {
+    yieldAll(graph[name].in, function(deps) {
+      deps.splice(graph[name].resultIndex, 0, function(result) {
+        graph[name].value = result;
+        fn();
+      });
+
+       graph[name].fn.apply({ }, deps);
+    });
+  },
+
+  effect:function(name, fn) {
+    yieldAll(graph[name].in, function(deps) {
+      graph[name].fn.apply({ }, deps);
+      fn();
+    });
+  }
+};
+
+function trigger(name) {
+  evaluate(name, function() { });
+}
+
+function triggerDownstream(name) {
+  graph[name].out.forEach(trigger);
+}
+
+Cable.data = function(value, helpers) {
+  var obj = { type:"data", value:value };
+  if (helpers) {
+    obj.helpers = helpers;
+  }
+  return obj;
+};
+
+Cable.event = function(selector, events, property) {
+  return { 
+    type:"event",
+    wireup:function(fn) {
+      $(selector).on(events, function() {
+        var val = null;
+
+        if (property === "value") {
+          val = $(selector).val();
+        }
+        else if (property === "time") {
+          val = new Date();
+        }
+
+        fn(val);
+      });
     }
   };
+};
 
-})();
+Cable.list = function(array) {
+  return {
+    array:Cable.data(array),
+    main:Cable.data(null, {
+      splice:function(i, h, r) {
+        return { index:i, howMany:h, replacement:r };
+      }
+    }),
+    updater:function(main, _array) {
+      var s = main();
 
+      var a = _array().slice(0);
+      a.splice(s.index, s.howMany, s.replacement);
+      _array(a);
+    }
+  };
+};

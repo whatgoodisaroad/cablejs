@@ -1,41 +1,28 @@
 <html>
   <head><title>Cable</title></head>
   <body>
+    <ul id="list"></lul>
+    <input id="new" type="text" />
+    <input type="button" value="Add" id="add-button" />
+    <div id="display"></div>
+
+    <script src="jquery-1.10.2.min.js"></script>
     <script src="../src/cable.js"></script>
     <script>
-      Cable.def({
-        name:{
-          type:"data",
-          value:"Wyatt"
-        },
-        age:{
-          type:"data",
-          value:25
-        },
-        listen:function(name) { 
-          console.log("Name changed to '" + name() + "'"); 
+      Cable.define({
+        todoList:Cable.list([ "Do the laundry" ]),
+
+        textbox:Cable.event("#new", "change keyup", "value"),
+        button:Cable.event("#add-button", "click", "time"),
+
+        add:function(button, _textbox, _todoList) {
+          _todoList.splice(0, 0, _textbox());
         },
 
-        consider:function(name, age) {
-          console.log("Consider, if you will, " + name() + ", age " + age());
-        },
-
-        timer:function(event) {
-          setInterval(event, 10000);
-        },
-
-        alertSauce:function(timer) { 
-          Cable.get(function(age) {
-            age(age() + 1);
-            console.log("Aged one year! " + age());
-          });
+        displayItems:function(todoList_array) {
+          $("#display").html(todoList_array().join("<br/>"));
         }
       });
-
-      Cable._debugGraph();
-
-      Cable.get(function(name) { name("Tony"); console.log(name()); });
-      Cable.get(function(name) { console.log(name()); });
     </script>
   </body>
 </html>
