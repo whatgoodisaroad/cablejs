@@ -6,10 +6,12 @@
     <input type="button" value="Add" id="add-button" />
     <div id="display"></div>
 
-    <script src="jquery-1.10.2.min.js"></script>
     <script src="../src/cable.js"></script>
     <script>
       Cable.define({
+        $:Cable.library("jquery-1.10.2.min.js"),
+        mustache:Cable.library("mustache.js"),
+
         todoList:Cable.list([ "Do the laundry" ]),
 
         textbox:Cable.event("#new", "change keyup", "value"),
@@ -19,7 +21,7 @@
           _todoList.splice(0, 0, _textbox());
         },
 
-        displayItems:function(todoList_array) {
+        displayItems:function(todoList_array, mustache) {
           $("#display").html(todoList_array().join("<br/>"));
         }
       });

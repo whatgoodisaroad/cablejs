@@ -1,6 +1,6 @@
 var Cable = {};
 
-var keywords = [ "result" ];
+var keywords = "result define type".split(" ");
 
 var graph = { };
 
@@ -77,11 +77,15 @@ function isSynthetic(fn) {
 
 Cable.define = function(object, noReify) {
   each(object, function(cable, name) {
+    if (/^_/.test(name)) {
+      throw "Illegal definition: names cannot begin with an underscore.";
+    }
+
     if (keywords.indexOf(name) != -1) {
       throw "Illegal definition: " + name + " is a reserved word.";
     }
 
-    if (graph[name]) {
+    if (graph.hasOwnProperty(name)) {
       throw "Illegal definition: " + name + " is already defined.";
     }
 
@@ -176,6 +180,17 @@ var install = {
         setter(value);
       });
     });
+  },
+
+  library:function(name, obj) {
+    graph[name] = {
+      type:"library",
+      path:obj.path,
+      shim:obj.shim,
+
+      handle:null,
+      loaded:false
+    };
   }
 };
 
@@ -216,9 +231,6 @@ function reify() {
   });
 }
 
-
-
-
 var yields = {
   data:function(name, fn) {
     var access = function() {
@@ -254,7 +266,7 @@ var yields = {
     }
   },
 
-  effect:function() { },
+  effect:function() { /* Do anything here? */ },
 
   event:function(name, fn) {
     fn(function() {
@@ -266,6 +278,17 @@ var yields = {
         triggerDownstream(name);
       }
     });
+  },
+
+  library:function(name, fn) {
+    if (graph[name].loaded) {
+      fn(graph[name].handle);
+    }
+    else {
+      evaluate(name, function() {
+        yield(name, fn);
+      });
+    }
   }
 };
 
@@ -310,6 +333,51 @@ var evaluators = {
       graph[name].fn.apply({ }, deps);
       fn();
     });
+  },
+
+  library:function(name, fn) {
+    if (graph[name].loaded) {
+      fn();
+      return;
+    }
+
+    var define = function() {
+      var idx = arguments.length - 1;
+
+      if (isFunction(arguments[idx])) {
+        graph[name].handle = arguments[idx]();
+      }
+      else {
+        graph[name].handle = arguments[idx];
+      }
+
+      graph[name].loaded = true;
+    };
+
+    define.amd = {};
+
+    var req = new XMLHttpRequest();
+
+    req.onreadystatechange = function() {
+      if (this.readyState === 4 && this.status === 200) {
+        var source = this.responseText;
+
+        if (graph[name].shim) {
+          source = [
+            "define(function() {", source, "\nreturn ", graph[name].shim, "; });"
+          ].join("");
+        }
+
+        window.define = define;
+        eval(source);
+        delete window.define;
+
+        fn();
+      }
+    }
+
+    req.open("get", graph[name].path, true);
+    req.send();
   }
 };
 
@@ -320,6 +388,12 @@ function trigger(name) {
 function triggerDownstream(name) {
   graph[name].out.forEach(trigger);
 }
+
+
+
+
+// Helpers
+////////////////////////////////////////////////////////////////////////////////
 
 Cable.data = function(value, helpers) {
   var obj = { type:"data", value:value };
@@ -333,17 +407,19 @@ Cable.event = function(selector, events, property) {
   return { 
     type:"event",
     wireup:function(fn) {
-      $(selector).on(events, function() {
-        var val = null;
+      yield("$", function($) {
+        $(selector).on(events, function() {
+          var val = null;
 
-        if (property === "value") {
-          val = $(selector).val();
-        }
-        else if (property === "time") {
-          val = new Date();
-        }
+          if (property === "value") {
+            val = $(selector).val();
+          }
+          else if (property === "time") {
+            val = new Date();
+          }
 
-        fn(val);
+          fn(val);
+        });
       });
     }
   };
@@ -365,4 +441,21 @@ Cable.list = function(array) {
       _array(a);
     }
   };
+};
+
+Cable.interval = function(ms) {
+  return {
+    type:"event",
+    wireup:function(fn) {
+      setInterval(fn, ms);
+    }
+  };
+};
+
+Cable.library = function(path, shim) {
+  return {
+    type:"library",
+    path:path,
+    shim:shim
+  }
 };
