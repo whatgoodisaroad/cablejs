@@ -2,7 +2,11 @@
   <head><title>Cable</title></head>
   <body>
     <ul id="list"></lul>
-    <input id="new" type="text" />
+    <input id="interval" type="number" value="500" step="100" min="100" max="10000" />
+
+    <input id="new" type="text" value="Pay dem bills" />
+
+
     <input type="button" value="Add" id="add-button" />
     <div id="display"></div>
 
@@ -14,7 +18,7 @@
 
         todoList:Cable.list([ "Do the laundry" ]),
 
-        textbox:Cable.event("#new", "change keyup", "value"),
+        textbox:Cable.event("#new", "change keyup", "value", true),
         button:Cable.event("#add-button", "click", "time"),
 
         add:function(button, _textbox, _todoList) {
@@ -23,6 +27,12 @@
 
         displayItems:function(todoList_array, mustache) {
           $("#display").html(todoList_array().join("<br/>"));
+        },
+
+        frequency:Cable.event("#interval", "change", "value", true),
+        interval:Cable.interval("frequency"),
+        dispInt:function(interval) {
+          document.title = interval() * 1;
         }
       });
     </script>

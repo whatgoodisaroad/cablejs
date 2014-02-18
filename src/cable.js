@@ -1,6 +1,6 @@
 var Cable = {};
 
-var keywords = "result define type".split(" ");
+var keywords = "result define type event".split(" ");
 
 var graph = { };
 
@@ -32,10 +32,13 @@ function getFanIn(fn, context) {
   if (context) {
     result = result.map(function(arg) {
       if (arg === "main") {
-        return context;
+        return context.name;
+      }
+      else if (context.references.hasOwnProperty(arg)) {
+        return context.references[arg];
       }
       else {
-        return context + "_" + arg;
+        return context.name + "_" + arg;
       }
     });
   }
@@ -52,10 +55,13 @@ function getDependencies(fn, context) {
   if (context) {
     result = result.map(function(arg) {
       if (arg === "main") {
-        return context;
+        return context.name;
+      }
+      else if (context.references.hasOwnProperty(arg)) {
+        return context.references[arg];
       }
       else {
-        return context + "_" + arg;
+        return context.name + "_" + arg;
       }
     });
   }
@@ -100,10 +106,19 @@ Cable.define = function(object, noReify) {
     else {
       type = "sub";
       var newObj = { };
+
+      // Find references:
+      var references = { };
+      each(cable, function(subobj, subname) {
+        if (subobj.type === "reference") {
+          references[subname] = subobj.referenceName;
+        }
+      });
+
       each(cable, function(subobj, subname) {
         var newName = subname === "main" ? name : name + "_" + subname;
         newObj[newName] = subobj;
-        newObj[newName].context = name;
+        newObj[newName].context = { name:name, references:references };
       });
       Cable.define(newObj, true);
     }
@@ -111,7 +126,7 @@ Cable.define = function(object, noReify) {
     if (install.hasOwnProperty(type)) {
       install[type](name, cable);
     }
-    else if (type !== "sub") {
+    else if (type !== "sub" && type !== "reference") {
       throw "Illegal definiton: could not determine meaning of " + name;
     }
   });
@@ -145,7 +160,7 @@ var install = {
       in:getFanIn(fn, fn.context),
       out:[],
 
-      resultIndex:getFanIn(fn).indexOf("result"),
+      resultIndex:getArgNames(fn).indexOf("result"),
 
       context:fn.context
     };
@@ -167,7 +182,7 @@ var install = {
   event:function(name, obj) {
     graph[name] = {
       type:"event",
-      value:null,
+      value:obj.defaultValue,
 
       in:[],
       out:[],
@@ -203,27 +218,55 @@ function reify() {
   //  Pass 2: Append dependencies
   each(graph, function(node, nodeName) {
     if (node.fn) {
-      getDependencies(node.fn, node.context).forEach(function(depName) {
+      getDependencies(node.fn, node.context).forEach(function(depName) {        
+        //  If it's a regular reference to an extant property:
         if (graph.hasOwnProperty(depName)) {
           graph[depName].out.push(nodeName);
         }
-        else if ( node.hasOwnProperty("context") &&
-                  graph.hasOwnProperty(node.context + "_" + depName)) {
-          graph[node.context + "_" + depName].out.push(nodeName);
-        }
+
+        //  If it's a contextualized 'main' reference:
         else if ( node.hasOwnProperty("context") &&
                   depName === "main" &&
-                  graph.hasOwnProperty(node.context)) {
-          graph[node.context].out.push(nodeName);
+                  graph.hasOwnProperty(node.context.name)) {
+          graph[node.context.name].out.push(nodeName);
         }
+
+        //  If it's a simple contextualized reference:
+        else if ( node.hasOwnProperty("context") &&
+                  graph.hasOwnProperty(node.context.name + "_" + depName)) {
+          graph[node.context.name + "_" + depName].out.push(nodeName);
+        }
+        
+        //  If it's a contextualized reference in a reference map:
+        else if ( node.hasOwnProperty("context") &&
+                  node.context.hasOwnProperty(depName) &&
+                  graph.hasOwnProperty(node.contex.references[depName])) {
+          graph[depName].out.push(node.contex.references[depName]);
+        }
+
+        //  Otherwise, it looks like the reference is bad:
         else {
+          function showContext(context) {
+            var refs = [];
+            each(context.references, function(ref, name) {
+              refs.push("'" + name + "' ==> '" + ref + "'");
+            })
+
+            return (
+              "named '" + context.name + "'" + 
+              " and references {" + 
+              refs.join(", ") +
+              "}"
+            );
+          }
+
           throw "Reference to undefined node '" +
             depName +
             "' as dependency of '" +
             nodeName +
             "'" + 
             (node.hasOwnProperty("context") ?
-              " in context '" + node.context + "'" :
+              " in context " + showContext(node.context) :
               "");
         }
       });
@@ -258,12 +301,9 @@ var yields = {
   },
 
   synthetic:function(name, fn) {
-    if (graph[name].invoked) {
-      fn(graph[name].value);
-    }
-    else {
-      throw "TODO: invoke synthetic";
-    }
+    fn(function() {
+      return graph[name].value;
+    });
   },
 
   effect:function() { /* Do anything here? */ },
@@ -320,11 +360,17 @@ var evaluators = {
   synthetic:function(name, fn) {
     yieldAll(graph[name].in, function(deps) {
       deps.splice(graph[name].resultIndex, 0, function(result) {
-        graph[name].value = result;
+
+        if (graph[name].value != result) {
+          graph[name].value = result;
+          graph[name].invoked = true;
+          triggerDownstream(name);
+        }
+
         fn();
       });
 
-       graph[name].fn.apply({ }, deps);
+      graph[name].fn.apply({ }, deps);
     });
   },
 
@@ -403,7 +449,7 @@ Cable.data = function(value, helpers) {
   return obj;
 };
 
-Cable.event = function(selector, events, property) {
+Cable.event = function(selector, events, property, triggerOnLoad) {
   return { 
     type:"event",
     wireup:function(fn) {
@@ -420,6 +466,15 @@ Cable.event = function(selector, events, property) {
 
           fn(val);
         });
+
+        if (triggerOnLoad) {
+          if (property === "value") {
+            fn($(selector).val());
+          }
+          else if (property === "time") {
+            fn(new Date());
+          }
+        }
       });
     }
   };
@@ -443,13 +498,34 @@ Cable.list = function(array) {
   };
 };
 
-Cable.interval = function(ms) {
-  return {
-    type:"event",
-    wireup:function(fn) {
-      setInterval(fn, ms);
-    }
-  };
+Cable.interval = function(period) {
+  if (period.substring) {
+    return {
+      ref:Cable.reference(period),
+      pid:Cable.data(-1),
+      main:function(ref, _pid, result) {
+        clearInterval(_pid());
+        var newPid = setInterval(
+          function() { result(new Date()); },
+          ref()
+        );
+
+        _pid(newPid);
+      }
+    };
+  }
+  else {
+    return {
+      type:"event",
+      wireup:function(fn) {
+        setInterval(fn, period);
+      }
+    };
+  }
+};
+
+Cable.reference = function(name) {
+  return { type:"reference", referenceName:name };
 };
 
 Cable.library = function(path, shim) {
