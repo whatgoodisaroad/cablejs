@@ -2,10 +2,9 @@
   <head><title>Cable</title></head>
   <body>
     <ul id="list"></lul>
-    <input id="interval" type="number" value="500" step="100" min="100" max="10000" />
+<!--     <input id="interval" type="number" value="500" step="100" min="100" max="10000" /> -->
 
     <input id="new" type="text" value="Pay dem bills" />
-
 
     <input type="button" value="Add" id="add-button" />
     <div id="display"></div>
@@ -13,27 +12,28 @@
     <script src="../src/cable.js"></script>
     <script>
       Cable.define({
-        $:Cable.library("jquery-1.10.2.min.js"),
-        mustache:Cable.library("mustache.js"),
+        $:Cable.library("../lib/jquery-1.10.2.min.js"),
+        mustache:Cable.library("../lib/mustache.js"),
 
         todoList:Cable.list([ "Do the laundry" ]),
 
         textbox:Cable.event("#new", "change keyup", "value", true),
         button:Cable.event("#add-button", "click", "time"),
 
-        add:function(button, _textbox, _todoList) {
-          _todoList.splice(0, 0, _textbox());
+        add:function(button, _textbox, _todoList, $) {
+          _todoList.append(_textbox());
+          $("#new").val("");
         },
 
         displayItems:function(todoList_array, mustache) {
           $("#display").html(todoList_array().join("<br/>"));
-        },
-
-        frequency:Cable.event("#interval", "change", "value", true),
-        interval:Cable.interval("frequency"),
-        dispInt:function(interval) {
-          document.title = interval() * 1;
         }
+
+        // frequency:Cable.event("#interval", "change", "value", true),
+        // interval:Cable.interval("frequency"),
+        // dispInt:function(interval) {
+        //   document.title = interval() * 1;
+        // }
       });
     </script>
   </body>

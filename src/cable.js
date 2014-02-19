@@ -486,13 +486,28 @@ Cable.list = function(array) {
     main:Cable.data(null, {
       splice:function(i, h, r) {
         return { index:i, howMany:h, replacement:r };
+      },
+      prepend:function(e) {
+        return { index:0, howMany:0, replacement:e };
+      },
+      append:function(e) {
+        return { index:-1, howMany:0, replacement:e };
+      },
+      updateAt:function(index, replacement) {
+        return { index:index, howMany:1, replacement:replacement };
       }
     }),
     updater:function(main, _array) {
-      var s = main();
+      var 
+        s = main(),
+        a = _array().slice(0);
 
-      var a = _array().slice(0);
-      a.splice(s.index, s.howMany, s.replacement);
+      if (s.index >= 0) {
+        a.splice(s.index, s.howMany, s.replacement);
+      }
+      else {
+        a.splice(a.length - s.index, s.howMany, s.replacement);
+      }
       _array(a);
     }
   };
