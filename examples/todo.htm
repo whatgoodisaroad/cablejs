@@ -3,6 +3,7 @@
   <body>
     <ul id="list"></lul>
 <!--     <input id="interval" type="number" value="500" step="100" min="100" max="10000" /> -->
+    <div id="umm"></div>
 
     <input id="new" type="text" value="Pay dem bills" />
 
@@ -22,12 +23,14 @@
 
         add:function(button, _textbox, _todoList, $) {
           _todoList.append(_textbox());
-          $("#new").val("");
+          $("#new").val("").trigger("change");
         },
 
         displayItems:function(todoList_array, mustache) {
           $("#display").html(todoList_array().join("<br/>"));
-        }
+        },
+
+        disp:Cable.template("#umm", "The textbox says {{textbox}}")
 
         // frequency:Cable.event("#interval", "change", "value", true),
         // interval:Cable.interval("frequency"),

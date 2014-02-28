@@ -1,6 +1,6 @@
 var Cable = {};
 
-var keywords = "result define type event".split(" ");
+var reserved = "result define type event".split(" ");
 
 var graph = { };
 
@@ -14,59 +14,39 @@ function each(obj, fn) {
 
 //  Find the argument names of a function.
 function getArgNames(fn) {
-  return (fn + "")
-    .match(/^function(\s+\S*)?\(([^)]+)\)/)[2]
-    .split(",")
-    .map(function(x) { return x.replace(/(^\s+)|(\s+$)/g, ""); });
+  if (fn.argAliases) {
+    return fn.argAliases;
+  }
+  else {
+    return (fn + "")
+      .match(/^function(\s+\S*)?\(([^)]+)\)/)[2]
+      .split(",")
+      .map(function(x) { return x.replace(/(^\s+)|(\s+$)/g, ""); });
+  }
 }
 
+//  Gets the list of properties which should be fed into the function as 
+//  arguments. Essentially, this is the list of argument names excluding 
+//  reserved words and with leading underscores removed. Each one should refer to 
+//  a  extant node (contextualized).
 function getFanIn(fn, context) {
-  var result = getArgNames(fn)
+  return getArgNames(fn)
     .filter(function(arg) {
-      return keywords.indexOf(arg) == -1;
+      return reserved.indexOf(arg) == -1;
     })
     .map(function(arg) {
       return arg.replace(/^_/, "");
     });
-
-  if (context) {
-    result = result.map(function(arg) {
-      if (arg === "main") {
-        return context.name;
-      }
-      else if (context.references.hasOwnProperty(arg)) {
-        return context.references[arg];
-      }
-      else {
-        return context.name + "_" + arg;
-      }
-    });
-  }
-
-  return result;
 }
 
+//  Gets the list of nodes which are dependencies and which can trigger this 
+//  node. In other words, it is the arguments excluding reserved words and arguments
+//  with leading underscores.
 function getDependencies(fn, context) {
-  var result = getArgNames(fn)
+  return getArgNames(fn)
     .filter(function(arg) {
-      return keywords.indexOf(arg) == -1 && arg[0] != '_';
+      return reserved.indexOf(arg) == -1 && arg[0] != '_';
     });
-
-  if (context) {
-    result = result.map(function(arg) {
-      if (arg === "main") {
-        return context.name;
-      }
-      else if (context.references.hasOwnProperty(arg)) {
-        return context.references[arg];
-      }
-      else {
-        return context.name + "_" + arg;
-      }
-    });
-  }
-
-  return result;
 }
 
 // Via http://stackoverflow.com/a/7356528/26626
@@ -81,61 +61,83 @@ function isSynthetic(fn) {
   return getArgNames(fn).indexOf("result") != -1;
 }
 
-Cable.define = function(object, noReify) {
+//  Return the first argument with overriden properties from the second 
+//  argument. For example extend({ x:1, y:2 }, { y:3 }) === { x:1, y:3 } OR
+//  extend({ x:1, y:2 }, { z:1000 }) === { x:1, y:2 }
+function extend(defaults, override) {
+  if (override) {
+    var o = { };
+    each(defaults, function(prop, name) {
+      o[name] = override.hasOwnProperty(name) ? override[name] : prop;
+    });
+    return o;
+  }
+  else {
+    return defaults;
+  }
+}
+
+//  Definition function. Essentially this is the interface for cable.
+Cable.define = function(object, options) {
+
+  //  Get a complete options set.
+  var options = extend(
+    { reify:true, scope:{ chain:[] } },
+    options
+  );
+
+  //  For each definition in the object, examine it's meaning/validity and defer 
+  //  to the installation procedures as appropriate.
   each(object, function(cable, name) {
+
+    //  Check wehether the name is valid:
     if (/^_/.test(name)) {
       throw "Illegal definition: names cannot begin with an underscore.";
     }
-
-    if (keywords.indexOf(name) != -1) {
+    if (reserved.indexOf(name) != -1) {
       throw "Illegal definition: " + name + " is a reserved word.";
     }
-
     if (graph.hasOwnProperty(name)) {
       throw "Illegal definition: " + name + " is already defined.";
     }
 
+    //  Next: determine the type:
     var type = null;
 
+    //  If it has an explicitly declared type, use it.
     if (cable.hasOwnProperty("type")) {
       type = cable.type;
     }
+
+    //  Otherwise, it's a function and we must determine whether it's a 
+    //  synthetic function (produces synthetic data) or an effect function 
+    //  (causes a side effect externally to cable e.g. the DOM).
     else if (isFunction(cable)) {
       type = isSynthetic(cable) ? "synthetic" : "effect";
     }
+
+    //  Otherwise, assume it's a subdefinition.
     else {
       type = "sub";
-      var newObj = { };
-
-      // Find references:
-      var references = { };
-      each(cable, function(subobj, subname) {
-        if (subobj.type === "reference") {
-          references[subname] = subobj.referenceName;
-        }
-      });
-
-      each(cable, function(subobj, subname) {
-        var newName = subname === "main" ? name : name + "_" + subname;
-        newObj[newName] = subobj;
-        newObj[newName].context = { name:name, references:references };
-      });
-      Cable.define(newObj, true);
     }
 
+    //  If a type was determined, and an installer exists for that type, install 
+    //  it:
     if (install.hasOwnProperty(type)) {
-      install[type](name, cable);
+      install[type](name, cable, options.scope);
     }
     else if (type !== "sub" && type !== "reference") {
       throw "Illegal definiton: could not determine meaning of " + name;
     }
   });
 
-  reify();
+  if (options.reify) {
+    reify();
+  }
 };
 
 var install = {
-  data:function(name, obj) {
+  data:function(name, obj, scope) {
     graph[name] = {
       type:"data",
       value:obj.value,
@@ -145,11 +147,11 @@ var install = {
 
       helpers:obj.helpers ? obj.helpers : { },
 
-      context:obj.context
+      scope:scope
     };
   },
 
-  synthetic:function(name, fn) {
+  synthetic:function(name, fn, scope) {
     graph[name] = {
       type:"synthetic",
       fn:fn,
@@ -162,24 +164,23 @@ var install = {
 
       resultIndex:getArgNames(fn).indexOf("result"),
 
-      context:fn.context
+      scope:scope
     };
   },
 
-  effect:function(name, fn) {
+  effect:function(name, fn, scope) {
     graph[name] = {
       type:"effect",
       fn:fn,
 
       in:getFanIn(fn, fn.context),
-      out:[]
-      ,
+      out:[],
 
-      context:fn.context
+      scope:scope
     };
   },
 
-  event:function(name, obj) {
+  event:function(name, obj, scope) {
     graph[name] = {
       type:"event",
       value:obj.defaultValue,
@@ -187,7 +188,7 @@ var install = {
       in:[],
       out:[],
 
-      context:obj.context
+      scope:scope
     };
 
     obj.wireup(function(value) {
@@ -197,19 +198,91 @@ var install = {
     });
   },
 
-  library:function(name, obj) {
+  library:function(name, obj, scope) {
     graph[name] = {
       type:"library",
       path:obj.path,
       shim:obj.shim,
 
       handle:null,
-      loaded:false
+      loaded:false,
+
+      scope:scope
     };
+  },
+
+  sub:function(name, obj, scope) {
+    var newObj = { };
+
+    // Find references:
+    var references = { };
+    each(obj, function(subobj, subname) {
+      if (subobj.type === "reference") {
+        references[subname] = subobj.referenceName;
+      }
+    });
+
+    each(obj, function(subobj, subname) {
+      var newName = subname === "main" ? name : name + "_" + subname;
+      newObj[newName] = subobj;
+    });
+
+    Cable.define(
+      newObj, { 
+        reify:false, 
+        scope:{
+          chain:scope.chain.concat([ name ])
+        }
+      }
+    );
   }
 };
 
+//  Take a scope chain and a name, and enumerate each possible namespace 
+//  prefixed version of that name starting with the deepest. For example 
+//  enumerateScopes(['x','y','z'], "w") === ["x_y_z_w", "x_y_w", "x_w"] OR
+//  enumerateScopes(['x','y'], "main") === ["x_y", "x"]
+function enumerateScopes(chain, name) {
+  var 
+    suffix = name === "main" ? "" : "_" + name,
+    scopes = [];
+  for (var idx = 0; idx < chain.length; ++idx) {
+    scopes.push(chain.slice(0, chain.length - idx).join("_") + suffix);
+  }
+  scopes.push(name);
+  return scopes;
+}
+
+//  Resolve the reference, If there is no apparent resolution, return null.
+function resolve(name, scope) {
+  var names = enumerateScopes(scope.chain, name);
+  for (var idx = 0; idx < names.length; ++idx) {
+    if (graph.hasOwnProperty(names[idx])) {
+      return names[idx];
+    }
+  }
+  return null;
+}
+
+//  Reify the graph. The graph is an object of cable definitions. This expresses
+//  a graph in two subtly different ways. If we let each definition be a vertex
+//  they each have fan-in and fan-out defined in their in and out properties 
+//  respectively, however these do not necessarily express the same graph, 
+//  because whereas in enumerates how to construct arguments for the node, out
+//  enumerates which nodes can be subsequently triggered by that node and not
+//  necessarily all of the nodes which it fans into.
+// 
+//  Because of this asymmetry, we only need to reify the out-graph. This can be
+//  done by wiping every out list and reconstructing it by looping over every 
+//  node and allowing them to append their name to any other node's out list.
+//
+//  If there is no internal consistency (e.g. a node refers to a node that does
+//  not (or does not *yet*) exist), an exception will be thrown. If one is 
+//  defining intermediate graphs, one should hold of on reifying it until 
+//  consistency is expected. This is the reason that sub-definitions are 
+//  installed with reification disabled in Cable.define.
 function reify() {
+
   //  Pass 1: Clean all objects
   each(graph, function(node) {
     node.out = [];
@@ -217,41 +290,30 @@ function reify() {
 
   //  Pass 2: Append dependencies
   each(graph, function(node, nodeName) {
+
+    //  Dependencies can only be needed when a function is present.
     if (node.fn) {
-      getDependencies(node.fn, node.context).forEach(function(depName) {        
-        //  If it's a regular reference to an extant property:
-        if (graph.hasOwnProperty(depName)) {
-          graph[depName].out.push(nodeName);
+
+      //  For each dependency
+      getDependencies(node.fn, node.context).forEach(function(depName) {
+
+        //  Here we need to determine the fully qualified namespaced name of the
+        //  dependency in order to add our name to its list.
+
+        var qname = resolve(depName, node.scope);
+
+        //  If it resolved:
+        if (qname) {
+          graph[qname].out.push(nodeName);
         }
 
-        //  If it's a contextualized 'main' reference:
-        else if ( node.hasOwnProperty("context") &&
-                  depName === "main" &&
-                  graph.hasOwnProperty(node.context.name)) {
-          graph[node.context.name].out.push(nodeName);
-        }
-
-        //  If it's a simple contextualized reference:
-        else if ( node.hasOwnProperty("context") &&
-                  graph.hasOwnProperty(node.context.name + "_" + depName)) {
-          graph[node.context.name + "_" + depName].out.push(nodeName);
-        }
-        
-        //  If it's a contextualized reference in a reference map:
-        else if ( node.hasOwnProperty("context") &&
-                  node.context.hasOwnProperty(depName) &&
-                  graph.hasOwnProperty(node.contex.references[depName])) {
-          graph[depName].out.push(node.contex.references[depName]);
-        }
-
-        //  Otherwise, it looks like the reference is bad:
+        //  Otherwise it's a bad reference:
         else {
           function showContext(context) {
             var refs = [];
             each(context.references, function(ref, name) {
               refs.push("'" + name + "' ==> '" + ref + "'");
             })
-
             return (
               "named '" + context.name + "'" + 
               " and references {" + 
@@ -349,6 +411,14 @@ function yieldAll(names, fn, prefix) {
   }
 }
 
+function yieldIn(name, fn) {
+  var resolved = graph[name].in.map(function(dep) {
+    return resolve(dep, graph[name].scope);
+  });
+
+  yieldAll(resolved, fn);
+}
+
 function evaluate(name, fn) {
   evaluators[graph[name].type](name, fn);
 }
@@ -358,7 +428,7 @@ var evaluators = {
   event:yield.event,
 
   synthetic:function(name, fn) {
-    yieldAll(graph[name].in, function(deps) {
+    yieldIn(name, function(deps) {
       deps.splice(graph[name].resultIndex, 0, function(result) {
 
         if (graph[name].value != result) {
@@ -375,7 +445,7 @@ var evaluators = {
   },
 
   effect:function(name, fn) {
-    yieldAll(graph[name].in, function(deps) {
+    yieldIn(name, function(deps) {
       graph[name].fn.apply({ }, deps);
       fn();
     });
@@ -549,4 +619,43 @@ Cable.library = function(path, shim) {
     path:path,
     shim:shim
   }
+};
+
+Cable.template = function(selector, template) {
+  var
+    reg = /\{\{[_a-zA-Z0-9]+\}\}/g,
+    match = template.match(reg) || [],
+    deps = match.map(function(m) { return m.replace(/\{|\}/g, ""); });
+
+  var obj =  {
+    properties:Cable.pack(deps),
+    main:function(properties, $) {
+
+      var rend = template;
+      for (var idx = 0; idx < deps.length; ++idx) {
+        rend = rend.replace("{{" + deps[idx] + "}}", properties()[deps[idx]]);
+      }
+
+      $(selector).html(rend);
+    }
+  };
+
+  return obj;
+};
+
+Cable.pack = function(args) {
+  var fn = function (result) {
+    var obj = { };
+    for (var idx = 1; idx < fn.argAliases.length; ++idx) {
+      obj[fn.argAliases[idx]] = arguments[idx]();
+    }
+
+    result(obj);
+  };
+
+  var aliases = args.slice(0);
+  aliases.splice(0, 0, "result");
+  fn.argAliases = aliases
+
+  return fn;
 };
