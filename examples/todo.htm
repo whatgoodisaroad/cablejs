@@ -1,16 +1,26 @@
 <html>
-  <head><title>Cable</title></head>
+  <head>
+    <title>Cable</title>
+    <style>
+      #list li.done {
+        text-decoration: line-through;
+      }
+    </style>
+  </head>
   <body>
     <ul id="list"></lul>
-<!--     <input id="interval" type="number" value="500" step="100" min="100" max="10000" /> -->
+
     <div id="umm"></div>
 
     <input id="new" type="text" value="Pay dem bills" />
 
     <input type="button" value="Add" id="add-button" />
-    <div id="display"></div>
+    <!-- <div id="display"></div> -->
 
-    <script src="../src/cable.js"></script>
+    <ul id="list-display"></ul>
+
+    <script src="../src/core.js"></script>
+    <script src="../src/helpers.js"></script>
     <script>
       Cable.define({
         $:Cable.library("../lib/jquery-1.10.2.min.js"),
@@ -19,24 +29,58 @@
         todoList:Cable.list([ "Do the laundry" ]),
 
         textbox:Cable.event("#new", "change keyup", "value", true),
+        textboxEnter:Cable.returnKey("#new"),
         button:Cable.event("#add-button", "click", "time"),
 
-        add:function(button, _textbox, _todoList, $) {
-          _todoList.append(_textbox());
-          $("#new").val("").trigger("change");
+        add:function(button, textboxEnter, _textbox, _todoList, $) {
+          if (_textbox().length) {
+            _todoList.append(_textbox());
+            $("#new").val("").trigger("change");
+          }
         },
 
-        displayItems:function(todoList_array, mustache) {
-          $("#display").html(todoList_array().join("<br/>"));
+        itemCounter:Cable.counter(),
+
+        displayList:function(init, todoList, $, _itemCounter) {
+          var splice = todoList();
+
+          // Remove elements to be removed:
+          var toRemove = [];
+          for (var idx = 0; idx < splice.howMany.length; ++idx) {
+            toRemove.push("ul#list-display li:eq(" + (splice.index + idx) + ")");
+          }
+          $(toRemove.join(", ")).remove();
+
+          //  Add the new elements:
+          for (var idx = 0; idx < splice.replacement.length; ++idx) {
+            var o = $("<li/>")
+              .text(splice.replacement[idx])
+              .attr("data-id", _itemCounter.next());
+
+            if (splice.index === -1 || !$("ul#list-display li").length) {
+              $("ul#list-display").append(o);
+            }
+            else {
+              $("ul#list-display li:eq(" + (splice.index + idx) + ")").after(o);
+            }
+          }
         },
 
-        disp:Cable.template("#umm", "The textbox says {{textbox}}")
+        finishTask:{
+          type:"event",
+          wireup:function(fn) {
+            Cable.yield("$", function($) {
+              $(document).on("click", "#list li", function(evt) { 
+                console.log("triggering");
+                fn($(evt.target).attr("data-id")); 
+              });
+            });
+          }
+        },
 
-        // frequency:Cable.event("#interval", "change", "value", true),
-        // interval:Cable.interval("frequency"),
-        // dispInt:function(interval) {
-        //   document.title = interval() * 1;
-        // }
+        wantToFinish:function($, finishTask) { 
+          $("#list li[data-id='" + finishTask() + "']").toggleClass("done");
+        }
       });
     </script>
   </body>

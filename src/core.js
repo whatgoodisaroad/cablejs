@@ -82,7 +82,7 @@ Cable.define = function(object, options) {
 
   //  Get a complete options set.
   var options = extend(
-    { reify:true, scope:{ chain:[] } },
+    { reify:true, wireup:true, scope:{ chain:[] } },
     options
   );
 
@@ -134,6 +134,10 @@ Cable.define = function(object, options) {
   if (options.reify) {
     reify();
   }
+
+  if (options.wireup) {
+    wireup();
+  }
 };
 
 var install = {
@@ -184,18 +188,14 @@ var install = {
     graph[name] = {
       type:"event",
       value:obj.defaultValue,
+      wireup:obj.wireup,
+      isWiredUp:false,
 
       in:[],
       out:[],
 
       scope:scope
     };
-
-    obj.wireup(function(value) {
-      yield(name, function(setter) {
-        setter(value);
-      });
-    });
   },
 
   library:function(name, obj, scope) {
@@ -230,6 +230,7 @@ var install = {
     Cable.define(
       newObj, { 
         reify:false, 
+        wireup:false,
         scope:{
           chain:scope.chain.concat([ name ])
         }
@@ -333,6 +334,20 @@ function reify() {
         }
       });
     }
+
+  });
+}
+
+function wireup() {
+  each(graph, function(node, nodeName) {
+    if (node.type === "event" && !node.isWiredUp) {
+      node.wireup(function(value) {
+        yield(nodeName, function(setter) {
+          setter(value);
+        });
+      });
+      node.isWiredUp = true;
+    }
   });
 }
 
@@ -350,11 +365,9 @@ var yields = {
 
     each(graph[name].helpers, function(helper, helpName) {
       access[helpName] = function() {
-        access(
-          helper.apply(
-            graph[name].value, 
-            arguments
-          )
+        return helper.apply(
+          access, 
+          arguments
         );
       };
     });
@@ -375,7 +388,7 @@ var yields = {
       if (!arguments.length) {
         return graph[name].value;
       }
-      else if (arguments[0] != graph[name].value) {
+      else if (arguments[0] != graph[name].value || !graph[name].coalesce) {
         graph[name].value = arguments[0];
         triggerDownstream(name);
       }
@@ -395,8 +408,15 @@ var yields = {
 };
 
 function yield(name, fn) {
-  yields[graph[name].type](name, fn);
+  if (graph.hasOwnProperty(name)) {
+    yields[graph[name].type](name, fn);
+  }
+  else {
+    throw "Cannot yield: '" + name + "' is not defined";
+  }
 }
+
+Cable.yield = yield;
 
 function yieldAll(names, fn, prefix) {
   if (prefix === undefined) { prefix = []; }
@@ -429,6 +449,7 @@ var evaluators = {
 
   synthetic:function(name, fn) {
     yieldIn(name, function(deps) {
+
       deps.splice(graph[name].resultIndex, 0, function(result) {
 
         if (graph[name].value != result) {
@@ -488,6 +509,8 @@ var evaluators = {
         eval(source);
         delete window.define;
 
+        if (name === "$" && $ && $.noConflict) { $.noConflict(); }
+
         fn();
       }
     }
@@ -504,158 +527,3 @@ function trigger(name) {
 function triggerDownstream(name) {
   graph[name].out.forEach(trigger);
 }
-
-
-
-
-// Helpers
-////////////////////////////////////////////////////////////////////////////////
-
-Cable.data = function(value, helpers) {
-  var obj = { type:"data", value:value };
-  if (helpers) {
-    obj.helpers = helpers;
-  }
-  return obj;
-};
-
-Cable.event = function(selector, events, property, triggerOnLoad) {
-  return { 
-    type:"event",
-    wireup:function(fn) {
-      yield("$", function($) {
-        $(selector).on(events, function() {
-          var val = null;
-
-          if (property === "value") {
-            val = $(selector).val();
-          }
-          else if (property === "time") {
-            val = new Date();
-          }
-
-          fn(val);
-        });
-
-        if (triggerOnLoad) {
-          if (property === "value") {
-            fn($(selector).val());
-          }
-          else if (property === "time") {
-            fn(new Date());
-          }
-        }
-      });
-    }
-  };
-};
-
-Cable.list = function(array) {
-  return {
-    array:Cable.data(array),
-    main:Cable.data(null, {
-      splice:function(i, h, r) {
-        return { index:i, howMany:h, replacement:r };
-      },
-      prepend:function(e) {
-        return { index:0, howMany:0, replacement:e };
-      },
-      append:function(e) {
-        return { index:-1, howMany:0, replacement:e };
-      },
-      updateAt:function(index, replacement) {
-        return { index:index, howMany:1, replacement:replacement };
-      }
-    }),
-    updater:function(main, _array) {
-      var 
-        s = main(),
-        a = _array().slice(0);
-
-      if (s.index >= 0) {
-        a.splice(s.index, s.howMany, s.replacement);
-      }
-      else {
-        a.splice(a.length - s.index, s.howMany, s.replacement);
-      }
-      _array(a);
-    }
-  };
-};
-
-Cable.interval = function(period) {
-  if (period.substring) {
-    return {
-      ref:Cable.reference(period),
-      pid:Cable.data(-1),
-      main:function(ref, _pid, result) {
-        clearInterval(_pid());
-        var newPid = setInterval(
-          function() { result(new Date()); },
-          ref()
-        );
-
-        _pid(newPid);
-      }
-    };
-  }
-  else {
-    return {
-      type:"event",
-      wireup:function(fn) {
-        setInterval(fn, period);
-      }
-    };
-  }
-};
-
-Cable.reference = function(name) {
-  return { type:"reference", referenceName:name };
-};
-
-Cable.library = function(path, shim) {
-  return {
-    type:"library",
-    path:path,
-    shim:shim
-  }
-};
-
-Cable.template = function(selector, template) {
-  var
-    reg = /\{\{[_a-zA-Z0-9]+\}\}/g,
-    match = template.match(reg) || [],
-    deps = match.map(function(m) { return m.replace(/\{|\}/g, ""); });
-
-  var obj =  {
-    properties:Cable.pack(deps),
-    main:function(properties, $) {
-
-      var rend = template;
-      for (var idx = 0; idx < deps.length; ++idx) {
-        rend = rend.replace("{{" + deps[idx] + "}}", properties()[deps[idx]]);
-      }
-
-      $(selector).html(rend);
-    }
-  };
-
-  return obj;
-};
-
-Cable.pack = function(args) {
-  var fn = function (result) {
-    var obj = { };
-    for (var idx = 1; idx < fn.argAliases.length; ++idx) {
-      obj[fn.argAliases[idx]] = arguments[idx]();
-    }
-
-    result(obj);
-  };
-
-  var aliases = args.slice(0);
-  aliases.splice(0, 0, "result");
-  fn.argAliases = aliases
-
-  return fn;
-};
