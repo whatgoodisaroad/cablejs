@@ -1,0 +1,68 @@
+<html>
+  <head>
+    <title>Cable</title>
+    <style>
+      html, body { font-family: sans-serif; text-align: center; }
+      #main {
+        width: 500px;
+        margin: 30px auto;
+        padding: 10px;
+        border:1px solid #ccc;
+      }
+      #symbol { margin-bottom: 20px; }
+      #name { font-size: 45px; }
+      #ask { font-size: 25px; margin-bottom: 20px; }
+      #updated { color:#777; }
+    </style>
+  </head>
+  <body>
+    <div id="main">
+      <input id="symbol" value="GOOG" />
+      <div id="name"></div>
+      <div id="ask"></div>
+      <div id="updated"></div>
+    </div>
+    <script src="../src/core.js"></script>
+    <script src="../src/helpers.js"></script>
+    <script>
+      Cable.define({
+        $:Cable.library("../lib/jquery-1.10.2.min.js"),
+
+        interval:Cable.interval(10000),
+        intervalTime:function(init, interval, result) {
+          result(interval().toLocaleTimeString());
+        },
+
+        symbol:Cable.event("#symbol", "keyup change", "value", true),
+        quote:Cable.json(function(symbol, result, interval) {
+          if (symbol().length) {
+            result("http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.quotes%20where%20symbol%20in%20(%22" + symbol() + "%22)%0A%09%09&env=http%3A%2F%2Fdatatables.org%2Falltables.env&format=json"
+            );
+          }
+        }),
+
+        ask:function(quote, result) {
+          var val = "N/A";
+          if (quote().query.results.quote.AskRealtime) {
+            val = quote().query.results.quote.AskRealtime;
+          }
+          result(val);
+        },
+
+        name:function(quote, result) {
+          var val = "{ Unknown Company }";
+          if (quote().query.results.quote.Name) {
+            val = quote().query.results.quote.Name;
+          }
+          result(val);
+        },
+
+        dispName:Cable.template("#name", "{{name}}"),
+        dispAsk:Cable.template("#ask", "${{ask}} per share"),
+
+        dispTime:Cable.template("#updated", "Updated at {{intervalTime}}")
+
+      });
+    </script>
+  </body>
+</html>
