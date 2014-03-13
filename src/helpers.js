@@ -143,7 +143,7 @@ Cable.interval = function(period) {
     return {
       type:"event",
       wireup:function(fn) {
-        setInterval(fn, period);
+        setInterval(function() { fn(new Date()); }, period);
       }
     };
   }
@@ -208,4 +208,19 @@ Cable.counter = function() {
       return n;
     }
   });
+};
+
+Cable.json = function(fn) {
+  return {
+    url:fn,
+    main:function($, url, result) {
+      $.ajax({
+        dataType: "json",
+        url: url(),
+        success: function(data) {
+          result(data);
+        }
+      });
+    }
+  };
 };

@@ -9,14 +9,8 @@
   </head>
   <body>
     <ul id="list"></lul>
-
-    <div id="umm"></div>
-
     <input id="new" type="text" value="Pay dem bills" />
-
     <input type="button" value="Add" id="add-button" />
-    <!-- <div id="display"></div> -->
-
     <ul id="list-display"></ul>
 
     <script src="../src/core.js"></script>
@@ -66,20 +60,19 @@
           }
         },
 
-        finishTask:{
+        taskClicked:{
           type:"event",
           wireup:function(fn) {
             Cable.yield("$", function($) {
               $(document).on("click", "#list li", function(evt) { 
-                console.log("triggering");
                 fn($(evt.target).attr("data-id")); 
               });
             });
           }
         },
 
-        wantToFinish:function($, finishTask) { 
-          $("#list li[data-id='" + finishTask() + "']").toggleClass("done");
+        finishTask:function($, taskClicked) { 
+          $("#list li[data-id='" + taskClicked() + "']").toggleClass("done");
         }
       });
     </script>

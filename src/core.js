@@ -1,6 +1,6 @@
 var Cable = {};
 
-var reserved = "result define type event".split(" ");
+var reserved = "result respond define type event".split(" ");
 
 var graph = { };
 
@@ -58,7 +58,10 @@ function isFunction(fn) {
 //  The test for whether a function represents a synthetic cable is whether it 
 //  requests a result handler.
 function isSynthetic(fn) {
-  return getArgNames(fn).indexOf("result") != -1;
+  return (
+    getArgNames(fn).indexOf("result") != -1 || 
+    getArgNames(fn).indexOf("respond") != -1
+  );
 }
 
 //  Return the first argument with overriden properties from the second 
@@ -156,20 +159,40 @@ var install = {
   },
 
   synthetic:function(name, fn, scope) {
-    graph[name] = {
-      type:"synthetic",
-      fn:fn,
+    if (getArgNames(fn).indexOf("respond") != -1) {
+      graph[name] = {
+        type:"synthetic",
+        fn:fn,
 
-      value:null,
-      invoked:false,
+        value:null,
+        invoked:false,
 
-      in:getFanIn(fn, fn.context),
-      out:[],
+        in:getFanIn(fn, fn.context),
+        out:[],
 
-      resultIndex:getArgNames(fn).indexOf("result"),
+        resultIndex:getArgNames(fn).indexOf("respond"),
 
-      scope:scope
-    };
+        scope:scope,
+        coalesce:false
+      };
+    }
+    else {
+      graph[name] = {
+        type:"synthetic",
+        fn:fn,
+
+        value:null,
+        invoked:false,
+
+        in:getFanIn(fn, fn.context),
+        out:[],
+
+        resultIndex:getArgNames(fn).indexOf("result"),
+
+        scope:scope,
+        coalesce:true
+      };
+    }
   },
 
   effect:function(name, fn, scope) {
@@ -452,7 +475,7 @@ var evaluators = {
 
       deps.splice(graph[name].resultIndex, 0, function(result) {
 
-        if (graph[name].value != result) {
+        if (graph[name].value != result || !graph[name].coalesce) {
           graph[name].value = result;
           graph[name].invoked = true;
           triggerDownstream(name);
