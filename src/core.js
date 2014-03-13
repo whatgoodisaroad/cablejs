@@ -1,5 +1,7 @@
 var Cable = {};
 
+(function() {
+
 var reserved = "result respond define type event".split(" ");
 
 var graph = { };
@@ -550,3 +552,5 @@ function trigger(name) {
 function triggerDownstream(name) {
   graph[name].out.forEach(trigger);
 }
+
+})();

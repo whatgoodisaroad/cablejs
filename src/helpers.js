@@ -45,7 +45,7 @@ Cable.event = function(selector, events, property, triggerOnLoad) {
             handler;
 
           if (events === "key-return") {
-            events === "keyup";
+            events = "keyup";
             handler = function(evt) {
               if (evt.keyCode === 13) {
                 getter();
