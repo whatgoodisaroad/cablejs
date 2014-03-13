@@ -142,6 +142,7 @@ Cable.interval = function(period) {
   else {
     return {
       type:"event",
+      defaultValue:new Date(),
       wireup:function(fn) {
         setInterval(function() { fn(new Date()); }, period);
       }
@@ -214,9 +215,12 @@ Cable.json = function(fn) {
   return {
     url:fn,
     main:function($, url, result) {
+      var cdr = /^http/.test(url()) && !/callback=/.test(url());
+
       $.ajax({
         dataType: "json",
         url: url(),
+        crossDomain:!!cdr,
         success: function(data) {
           result(data);
         }

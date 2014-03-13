@@ -34,11 +34,10 @@
         },
 
         symbol:Cable.event("#symbol", "keyup change", "value", true),
+
         quote:Cable.json(function(symbol, result, interval) {
-          if (symbol().length) {
-            result("http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.quotes%20where%20symbol%20in%20(%22" + symbol() + "%22)%0A%09%09&env=http%3A%2F%2Fdatatables.org%2Falltables.env&format=json"
-            );
-          }
+          result("http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.quotes%20where%20symbol%20in%20(%22" + symbol() + "%22)%0A%09%09&env=http%3A%2F%2Fdatatables.org%2Falltables.env&format=json"
+          );
         }),
 
         ask:function(quote, result) {
@@ -51,7 +50,7 @@
 
         name:function(quote, result) {
           var val = "{ Unknown Company }";
-          if (quote().query.results.quote.Name) {
+          if (quote().query.results.quote.AskRealtime) {
             val = quote().query.results.quote.Name;
           }
           result(val);
@@ -59,7 +58,6 @@
 
         dispName:Cable.template("#name", "{{name}}"),
         dispAsk:Cable.template("#ask", "${{ask}} per share"),
-
         dispTime:Cable.template("#updated", "Updated at {{intervalTime}}")
 
       });
