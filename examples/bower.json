@@ -1,0 +1,20 @@
+{
+  "name": "cable-js",
+  "version": "0.0.0",
+  "homepage": "https://github.com/whatgoodisaroad/cablejs",
+  "authors": [
+    "Wyatt Allen <wyatt.allen0@gmail.com>"
+  ],
+  "description": "An effect system for javascript",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "~2.1.0"
+  }
+}
