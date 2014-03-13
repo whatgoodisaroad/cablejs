@@ -2,16 +2,24 @@
   <head>
     <title>Cable</title>
     <style>
-      #list li.done {
-        text-decoration: line-through;
+      html, body { background: #ddd; }
+      #main { 
+        background: #fff; 
+        width: 400px; 
+        margin: 20px auto;
+        padding: 20px;
+        border-radius: 15px;
       }
+      #new { width:350px; }
+      #list li.done { text-decoration: line-through; }
     </style>
   </head>
   <body>
-    <ul id="list"></lul>
-    <input id="new" type="text" value="Pay dem bills" />
-    <input type="button" value="Add" id="add-button" />
-    <ul id="list-display"></ul>
+    <div id="main">
+      <input id="new" type="text" value="Pay dem bills" />
+      <input type="button" value="Add" id="add-button" />
+      <ul id="list"></ul>
+    </div>
 
     <script src="../src/core.js"></script>
     <script src="../src/helpers.js"></script>
@@ -41,7 +49,7 @@
           // Remove elements to be removed:
           var toRemove = [];
           for (var idx = 0; idx < splice.howMany.length; ++idx) {
-            toRemove.push("ul#list-display li:eq(" + (splice.index + idx) + ")");
+            toRemove.push("ul#list li:eq(" + (splice.index + idx) + ")");
           }
           $(toRemove.join(", ")).remove();
 
@@ -51,11 +59,11 @@
               .text(splice.replacement[idx])
               .attr("data-id", _itemCounter.next());
 
-            if (splice.index === -1 || !$("ul#list-display li").length) {
-              $("ul#list-display").append(o);
+            if (splice.index === -1 || !$("ul#list li").length) {
+              $("ul#list").append(o);
             }
             else {
-              $("ul#list-display li:eq(" + (splice.index + idx) + ")").after(o);
+              $("ul#list li:eq(" + (splice.index + idx) + ")").after(o);
             }
           }
         },
@@ -64,7 +72,7 @@
           type:"event",
           wireup:function(fn) {
             Cable.yield("$", function($) {
-              $(document).on("click", "#list li", function(evt) { 
+              $(document).on("click", "ul#list li", function(evt) { 
                 fn($(evt.target).attr("data-id")); 
               });
             });
