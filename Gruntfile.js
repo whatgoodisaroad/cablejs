@@ -15,7 +15,7 @@ module.exports = function(grunt) {
         },
         options: {
           // Any options supported by Closure Compiler, for example:
-          "compilation_level": "SIMPLE_OPTIMIZATIONS",
+          "compilation_level": "WHITESPACE_ONLY",
 
           // Plus a simultaneous processes limit
           "max_processes": 5,
