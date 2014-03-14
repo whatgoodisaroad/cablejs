@@ -67,6 +67,10 @@ Cable.event = function(selector, events, property, triggerOnLoad) {
   };
 };
 
+Cable.textbox = function(selector) {
+  return Cable.event(selector, "change keyup", "value", true);
+};
+
 Cable.returnKey = function(selector) {
   return {
     type:"event",

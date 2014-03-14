@@ -1,0 +1,161 @@
+<html>
+  <head>
+    <title>Ballistics</title>
+    <link 
+      rel="stylesheet" 
+      href="bower_components/bootstrap/dist/css/bootstrap.min.css" />
+    <style>
+      .main {
+        width: 600px;
+        padding:10px;
+        margin:30px auto;
+        border:1px solid #ccc;
+        border-radius:4px;
+      }
+    </style>
+  </head>
+  <body>
+
+
+    <div class="main container">
+      <div class="form-horizontal" role="form">
+        <div class="form-group">
+          <label for="g" class="col-sm-3 control-label">
+            G (m/s<sup>2</sup>)
+          </label>
+          <div class="col-sm-9">
+            <input id="g" value="9.81" class="form-control" type="number" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="theta" class="col-sm-3 control-label">
+            &Theta; (Degrees)
+          </label>
+          <div class="col-sm-9">
+            <input id="theta" value="45" class="form-control" type="number" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="v" class="col-sm-3 control-label">
+            v (m/s)
+          </label>
+          <div class="col-sm-9">
+            <input id="v" class="form-control" value="1000" type="number" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="y_0" class="col-sm-3 control-label">
+            y<sub>0</sub> (m)
+          </label>
+          <div class="col-sm-9">
+            <input id="y_0" value="10" class="form-control" type="number" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="d" class="col-sm-3 control-label">
+            d (m)
+          </label>
+          <div class="col-sm-9">
+            <p id="d" class="form-control-static"></p>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="v_f" class="col-sm-3 control-label">
+            v<sub>f</sub> (m/s)
+          </label>
+          <div class="col-sm-9">
+            <p id="v_f" class="form-control-static"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+     
+
+
+    <script src="../cable.min.js"></script>
+    <script>
+      // http://en.wikipedia.org/wiki/Trajectory_of_a_projectile
+      var Ballistics = {
+        d:function(g, theta, v, y_0) {
+          return (
+            (v * Math.cos(theta) / g) * (
+              (v * Math.sin(theta)) +
+              Math.sqrt(
+                Math.pow(v * Math.sin(theta), 2) + 
+                (2 * g * y_0)
+              )
+            )
+          );
+        },
+        t:function(g, theta, v, y_0) {
+          return (
+            (
+              (v * Math.sin(theta)) +
+              Math.sqrt(
+                Math.pow(v * Math.sin(theta), 2) + 
+                (2 * g * y_0)
+              )
+            ) /
+            g
+          );
+        },
+        phi:function(g, d, v) {
+          return (
+            0.5 *
+            Math.asin(
+              (g * d) / 
+              (v * v)
+            )
+          );
+        },
+        h:function(g, theta, v, y_0, x) {
+          return (
+            y_0 +
+            (x + Math.tan(theta)) - (
+              (g * x * x) /
+              (2 * Math.pow(v * Math.cos(theta)), 2)
+            )
+          );
+        },
+        v:function(g, theta, v, y_0, x) {
+          return Math.sqrt(
+            (v * v) -
+            (2 * g * x * Math.tan(theta)) +
+            Math.pow(
+              (g * x) / 
+              (v * Math.cos(theta)),
+              2
+            )
+          );
+        }
+      };
+
+
+      Cable.define({
+        $:Cable.library("bower_components/jquery/dist/jquery.min.js"),
+        d3:Cable.library("bower_components/d3/d3.min.js"),
+        
+        g:          Cable.textbox("#g"),
+        theta_deg:  Cable.textbox("#theta"),
+        v:          Cable.textbox("#v"),
+        y_0:        Cable.textbox("#y_0"),
+
+        theta:function(theta_deg, result) { 
+          result(theta_deg() * (Math.PI / 180)); 
+        },
+
+        d:function(g, theta, v, y_0, result) {
+          result(Ballistics.d(g(), theta(), v(), y_0()));
+        },
+
+        v_f:function(g, theta, v, y_0, d, result) {
+          result(Ballistics.v(g(), theta(), v(), y_0(), d()));
+        },
+
+        showD:Cable.template("#d", "{{d}} m"),
+        showV_f:Cable.template("#v_f", "{{v_f}} m/s")
+      });
+    </script>
+  </body>
+</html>
