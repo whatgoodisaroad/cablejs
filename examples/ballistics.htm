@@ -17,13 +17,17 @@
       .axis path,
       .axis line {
         fill: none;
-        stroke: #000;
+        stroke: #666;
         shape-rendering: crispEdges;
       }
-      .line {
-        fill: none;
-        stroke: steelblue;
-        stroke-width: 1.5px;
+      .axis text {
+        stroke: #ccc;
+        font-size: 8pt; 
+        font-weight: normal;
+      }
+      .markers .marker {
+        stroke-width:1;
+        marker-end:url(#arrowhead);
       }
     </style>
   </head>
@@ -108,9 +112,6 @@
         </div>
       </div>
     </div>
-
-     
-
 
     <script src="../cable.min.js"></script>
     <script>
@@ -278,7 +279,7 @@
         },
 
         updateTrajectory:function(d3, plot, markers) {
-          var lines = plot.svg.selectAll(".marker")
+          var lines = plot.svg.select(".markers").selectAll(".marker")
             .data(markers);
 
           lines.enter()
@@ -298,8 +299,6 @@
             .attr({
               style:function(d) { 
                 return (
-                  "stroke-width:2;" + 
-                  "marker-end:url(#arrowhead);" +
                   "stroke:rgb(" + 
                     Math.floor(plot.scale.v(d.v)) + 
                     ",0," + 
@@ -370,26 +369,8 @@
         },
 
         display:function(d3, plot, g, theta, v, y_0, _region) {
-          // TODO: this test ought to be default functionality.
-          if (
-            plot() != undefined &&
-            g() != undefined &&
-            theta() != undefined &&
-            v() != undefined &&
-            y_0() != undefined
-          ) {
-            _region(
-              Plot.update(
-                d3,
-                plot(),
-                _region(),
-                g(),
-                theta(),
-                v(),
-                y_0()
-              )
-            );
-          }
+          var r = Plot.update(d3, plot(), _region(), g(), theta(), v(), y_0());
+          _region(r);
         }
       });
     </script>

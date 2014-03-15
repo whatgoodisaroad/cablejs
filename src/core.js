@@ -215,6 +215,7 @@ var install = {
       value:obj.defaultValue,
       wireup:obj.wireup,
       isWiredUp:false,
+      invoked:false,
 
       "in":[],
       out:[],
@@ -414,6 +415,7 @@ var yields = {
         return graph[name].value;
       }
       else if (arguments[0] != graph[name].value || !graph[name].coalesce) {
+        graph[name].invoked = true;
         graph[name].value = arguments[0];
         triggerDownstream(name);
       }
@@ -546,11 +548,30 @@ var evaluators = {
 };
 
 function trigger(name) {
+  if (!allDependenciesEvaluated(name)) {
+    return;
+  }
+
   evaluate(name, function() { });
+}
+
+function allDependenciesEvaluated(name) {
+  var deps = graph[name]["in"].map(function(dep) {
+    return resolve(dep, graph[name].scope);
+  });
+
+  for (var idx = 0; idx < deps.length; ++idx) {
+    if (graph[deps[idx]].type === "event" && !graph[deps[idx]].invoked) {
+      return false;
+    }
+  }
+  return true;
 }
 
 function triggerDownstream(name) {
   graph[name].out.forEach(trigger);
 }
+
+Cable._debug = function() { return graph; };
 
 })();
