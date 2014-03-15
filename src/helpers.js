@@ -31,6 +31,10 @@ Cable.event = function(selector, events, property, triggerOnLoad) {
 
               if (property === "value") {
                 val = obj.val();
+
+                if (obj.is("[type='number']")) {
+                  val = parseFloat(val);
+                }
               }
               else if (property === "time") {
                 val = new Date();
