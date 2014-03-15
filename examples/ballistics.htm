@@ -187,13 +187,13 @@
       };
 
       var Plot = {
-        slices:10,
+        slices:20,
 
         setup:function(d3) {
           var
-            margin = {top: 20, right: 30, bottom: 30, left: 70},
-            width = 570 - margin.left - margin.right,
-            height = 200 - margin.top - margin.bottom,
+            margin = {top: 20, right: 30, bottom: 30, left: 150},
+            width = 578 - margin.left - margin.right,
+            height = 400 - margin.top - margin.bottom,
 
             x = d3.scale.linear().range([0, width]),
             y = d3.scale.linear().range([height, 0]),
@@ -251,7 +251,68 @@
           };
         },
 
-        update:function(d3, plot, g, theta, v, y_0) {
+        updateScale:function(d3, plot, region, traj) {
+          var 
+            x_ext = d3.extent(traj, function(d) { return d.x; }),
+            y_ext = d3.extent(traj, function(d) { return d.h; }),
+            scale = Math.max(x_ext[1], y_ext[1]);
+
+          if (scale > region) {
+            region = 1.5 * scale;
+          }
+          else if (1.5 * scale < region) {
+            region = scale;
+          }
+
+          plot.scale.x.domain([0, region]);
+          plot.scale.y.domain([0, region]);
+          plot.scale.v.domain(d3.extent(traj, function(d) { return d.v; }));
+
+          plot.axis.x.scale(plot.scale.x);
+          plot.axis.y.scale(plot.scale.y);
+
+          plot.axis.gx.transition().call(plot.axis.x);
+          plot.axis.gy.transition().call(plot.axis.y);
+
+          return region;
+        },
+
+        updateTrajectory:function(d3, plot, markers) {
+          var lines = plot.svg.selectAll(".marker")
+            .data(markers);
+
+          lines.enter()
+            .append("line")
+            .attr("class", "marker");
+
+          lines
+            .transition()
+            .attr({
+              x1:function(d) { return plot.scale.x(d.x1); },
+              y1:function(d) { return plot.scale.y(d.y1); },
+              x2:function(d) { return plot.scale.x(d.x2); },
+              y2:function(d) { return plot.scale.y(d.y2); }
+            });
+
+          lines
+            .attr({
+              style:function(d) { 
+                return (
+                  "stroke-width:2;" + 
+                  "marker-end:url(#arrowhead);" +
+                  "stroke:rgb(" + 
+                    Math.floor(plot.scale.v(d.v)) + 
+                    ",0," + 
+                    Math.floor(255 - plot.scale.v(d.v)) + 
+                  ");"
+                );
+              }
+            });
+
+          lines.exit().remove();
+        },
+
+        update:function(d3, plot, region, g, theta, v, y_0) {
 
           var
             traj = Ballistics.trajectory(g, theta, v, y_0, this.slices),
@@ -267,41 +328,10 @@
             });
           }
 
-          var x_ext = d3.extent(traj, function(d) { return d.x; })
+          var newRegion = this.updateScale(d3, plot, region, traj);
+          this.updateTrajectory(d3, plot, markers);
 
-          plot.scale.x.domain([0, Math.max(10, x_ext[1])]);
-          plot.scale.y.domain(d3.extent(traj, function(d) { return d.h; }));
-          plot.scale.v.domain(d3.extent(traj, function(d) { return d.v; }));
-
-          plot.axis.x.scale(plot.scale.x);
-          plot.axis.y.scale(plot.scale.y);
-
-          plot.axis.gx.call(plot.axis.x);
-          plot.axis.gy.call(plot.axis.y);
-
-          plot.svg.select(".markers").selectAll("line").remove();
-
-          plot.svg.select(".markers").selectAll("line")
-            .data(markers)
-            .enter()
-              .append("line")
-                .attr({
-                  x1:function(d) { return plot.scale.x(d.x1); },
-                  y1:function(d) { return plot.scale.y(d.y1); },
-                  x2:function(d) { return plot.scale.x(d.x2); },
-                  y2:function(d) { return plot.scale.y(d.y2); },
-                  style:function(d) { 
-                    return (
-                      "stroke-width:2;" + 
-                      "marker-end:url(#arrowhead);" +
-                      "stroke:rgb(" + 
-                        Math.floor(plot.scale.v(d.v)) + 
-                        ",0," + 
-                        Math.floor(255 - plot.scale.v(d.v)) + 
-                      ");"
-                    );
-                  }
-                });
+          return newRegion
         }
       };
 
@@ -310,7 +340,9 @@
         $:Cable.library("bower_components/jquery/dist/jquery.min.js"),
         
         d3:Cable.library("bower_components/d3/d3.min.js"),
+
         plot:Cable.data(null),
+        region:Cable.data(0),
         
         g:          Cable.textbox("#g"),
         theta_deg:  Cable.textbox("#theta"),
@@ -337,7 +369,7 @@
           _plot(Plot.setup(d3));
         },
 
-        display:function(d3, plot, g, theta, v, y_0) {
+        display:function(d3, plot, g, theta, v, y_0, _region) {
           // TODO: this test ought to be default functionality.
           if (
             plot() != undefined &&
@@ -346,7 +378,17 @@
             v() != undefined &&
             y_0() != undefined
           ) {
-            Plot.update(d3, plot(), g(), theta(), v(), y_0());
+            _region(
+              Plot.update(
+                d3,
+                plot(),
+                _region(),
+                g(),
+                theta(),
+                v(),
+                y_0()
+              )
+            );
           }
         }
       });
