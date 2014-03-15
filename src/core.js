@@ -151,7 +151,7 @@ var install = {
       type:"data",
       value:obj.value,
 
-      in:[],
+      "in":[],
       out:[],
 
       helpers:obj.helpers ? obj.helpers : { },
@@ -169,7 +169,7 @@ var install = {
         value:null,
         invoked:false,
 
-        in:getFanIn(fn, fn.context),
+        "in":getFanIn(fn, fn.context),
         out:[],
 
         resultIndex:getArgNames(fn).indexOf("respond"),
@@ -186,7 +186,7 @@ var install = {
         value:null,
         invoked:false,
 
-        in:getFanIn(fn, fn.context),
+        "in":getFanIn(fn, fn.context),
         out:[],
 
         resultIndex:getArgNames(fn).indexOf("result"),
@@ -202,7 +202,7 @@ var install = {
       type:"effect",
       fn:fn,
 
-      in:getFanIn(fn, fn.context),
+      "in":getFanIn(fn, fn.context),
       out:[],
 
       scope:scope
@@ -216,7 +216,7 @@ var install = {
       wireup:obj.wireup,
       isWiredUp:false,
 
-      in:[],
+      "in":[],
       out:[],
 
       scope:scope
@@ -457,7 +457,7 @@ function yieldAll(names, fn, prefix) {
 }
 
 function yieldIn(name, fn) {
-  var resolved = graph[name].in.map(function(dep) {
+  var resolved = graph[name]["in"].map(function(dep) {
     return resolve(dep, graph[name].scope);
   });
 
