@@ -27,7 +27,7 @@ module.exports = function(grunt) {
     }
   });
 
-  grunt.registerTask('minify', ['closurecompiler:minify']); 
+  grunt.registerTask('build', ['closurecompiler:minify']); 
 
-  grunt.registerTask('default', ['minify']); 
+  grunt.registerTask('default', ['build']); 
 };
