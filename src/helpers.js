@@ -180,9 +180,21 @@ Cable.template = function(selector, template) {
     properties:Cable.pack(deps),
     main:function(properties, $) {
 
+      function disp(v) {
+        if (typeof(v) === "number") {
+          return v.toFixed(2);
+        }
+        else {
+          return v;
+        }
+      }
+
       var rend = template;
       for (var idx = 0; idx < deps.length; ++idx) {
-        rend = rend.replace("{{" + deps[idx] + "}}", properties()[deps[idx]]);
+        rend = rend.replace(
+          "{{" + deps[idx] + "}}", 
+          disp(properties()[deps[idx]])
+        );
       }
 
       $(selector).html(rend);
