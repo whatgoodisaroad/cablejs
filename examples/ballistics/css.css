@@ -5,20 +5,18 @@
   border:1px solid #ccc;
   border-radius:4px;
 }
-
-/* TODO: Scope to SVG */
-.axis path,
-.axis line {
+svg .axis path,
+svg .axis line {
   fill: none;
   stroke: #666;
   shape-rendering: crispEdges;
 }
-.axis text {
+svg .axis text {
   stroke: #666;
   font-size: 7pt; 
   font-weight: normal;
 }
-.markers .marker {
+svg .markers .marker {
   stroke-width:1;
   marker-end:url(#arrowhead);
 }

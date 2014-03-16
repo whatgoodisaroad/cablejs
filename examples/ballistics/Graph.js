@@ -4,7 +4,12 @@ define(function() {
 
     setup:function(d3) {
       var
-        margin = {top: 20, right: 30, bottom: 30, left: 140},
+        margin = {
+          top: 20, 
+          right: 30, 
+          bottom: 30, 
+          left: 140
+        },
         width = 578 - margin.left - margin.right,
         height = 400 - margin.top - margin.bottom,
 
@@ -124,7 +129,6 @@ define(function() {
     },
 
     update:function(d3, Ballistics, plot, region, g, theta, v, y_0) {
-
       var
         traj = Ballistics.trajectory(g, theta, v, y_0, this.slices),
         markers = [];

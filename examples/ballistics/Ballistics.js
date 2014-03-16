@@ -1,6 +1,7 @@
 define(function() {
-  // http://en.wikipedia.org/wiki/Trajectory_of_a_projectile
   return {
+    // http://en.wikipedia.org/wiki/Trajectory_of_a_projectile
+    
     d:function(g, theta, v, y_0) {
       return (
         (v * Math.cos(theta) / g) * (
