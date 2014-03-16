@@ -1,0 +1,114 @@
+<html>
+  <head>
+    <title>Ballistics</title>
+    <link 
+      rel="stylesheet" 
+      href="../bower_components/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="css.css" />
+  </head>
+  <body>
+    <div class="main container form-horizontal" role="form">
+      <div class="form-group">
+        <label for="g" class="col-sm-3 control-label">
+          G (m/s<sup>2</sup>)
+        </label>
+        <div class="col-sm-9">
+          <input id="g" value="9.81" class="form-control" type="number" min="1" 
+            step="any" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="theta" class="col-sm-3 control-label">
+          &Theta; (Degrees)
+        </label>
+        <div class="col-sm-9">
+          <input id="theta" value="45" class="form-control" type="number" 
+            step="0.5" max="89.5" min="0.5" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="v" class="col-sm-3 control-label">
+          v (m/s)
+        </label>
+        <div class="col-sm-9">
+          <input id="v" class="form-control" value="10" type="number" step="any" 
+            min="1" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="y_0" class="col-sm-3 control-label">
+          y<sub>0</sub> (m)
+        </label>
+        <div class="col-sm-9">
+          <input id="y_0" value="10" class="form-control" type="number" 
+            step="any" min="0" max="100" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="d" class="col-sm-3 control-label">
+          d (m)
+        </label>
+        <div class="col-sm-9">
+          <p id="d" class="form-control-static"></p>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="v_f" class="col-sm-3 control-label">
+          v<sub>f</sub> (m/s)
+        </label>
+        <div class="col-sm-9">
+          <p id="v_f" class="form-control-static"></p>
+        </div>
+      </div>
+    </div>
+
+    <script src="../../cable.min.js"></script>
+    <script>
+      Cable.define({
+        $:          Cable.library("../bower_components/jquery/dist/jquery.min.js"),
+        d3:         Cable.library("../bower_components/d3/d3.min.js"),
+        Ballistics: Cable.library("./Ballistics.js"),
+        Graph:      Cable.library("./Graph.js"),
+
+        context:    Cable.data(null),
+        region:     Cable.data(0),
+        
+        g:          Cable.textbox("#g"),
+        theta_deg:  Cable.textbox("#theta"),
+        v:          Cable.textbox("#v"),
+        y_0:        Cable.textbox("#y_0"),
+
+        theta:function(theta_deg, result) { 
+          result(theta_deg() * (Math.PI / 180)); 
+        },
+
+        d:function(Ballistics, g, theta, v, y_0, result) {
+          result(Ballistics.d(g(), theta(), v(), y_0()));
+        },
+
+        v_f:function(Ballistics, g, theta, v, y_0, d, result) {
+          result(Ballistics.v(g(), theta(), v(), y_0(), d()));
+        },
+
+        showD:Cable.template("#d", "{{d}} m"),
+        showV_f:Cable.template("#v_f", "{{v_f}} m/s"),
+
+        setup:function(d3, Graph, _context, init) {
+          // TODO: Should check self-depenency?
+          _context(Graph.setup(d3));
+        },
+
+        display:function(
+          d3, Ballistics, Graph, 
+          context, g, theta, v, y_0, _region
+        ) {
+          var r = Graph.update(
+            d3, Ballistics, 
+            context(), _region(), g(), theta(), v(), y_0()
+          );
+          _region(r);
+        }
+      });
+    </script>
+  </body>
+</html>

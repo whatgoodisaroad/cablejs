@@ -1,0 +1,24 @@
+.main {
+  width: 600px;
+  padding:10px;
+  margin:30px auto;
+  border:1px solid #ccc;
+  border-radius:4px;
+}
+
+/* TODO: Scope to SVG */
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #666;
+  shape-rendering: crispEdges;
+}
+.axis text {
+  stroke: #666;
+  font-size: 7pt; 
+  font-weight: normal;
+}
+.markers .marker {
+  stroke-width:1;
+  marker-end:url(#arrowhead);
+}
