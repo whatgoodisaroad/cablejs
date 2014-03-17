@@ -1,6 +1,11 @@
 // Helpers
 ////////////////////////////////////////////////////////////////////////////////
 
+Cable.withArgs = function(args, fn) {
+  fn.argAliases = args;
+  return fn;
+};
+
 Cable.data = function(value, helpers) {
   var obj = { type:"data", value:value };
   if (helpers) {

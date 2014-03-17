@@ -24,8 +24,7 @@
       <p id="about">
         This is a simulation of a 
         <a href="http://en.wikipedia.org/wiki/Flip-flop_(electronics)#Gated_SR_latch">
-          Gated SR Latch
-        </a>
+          Gated SR Latch</a>.
       </p>
     </div>
     
@@ -35,6 +34,16 @@
         var color = val ? "red" : "black"
         d3.selectAll(sel).style({ stroke:color });
       }
+
+      var wireMap = {
+        r:    "#path5053",
+        e:    "#path5065, #path5067, #path3944",
+        s:    "#path5061",
+        andRE:"#path3061",
+        andES:"#path3628",
+        norR: "#path3059, #path3746, #path3626, #path3252, #text3728",
+        norS: "#path3624, #path3748, #path3636, #path3726, #text3732"
+      };
 
       Cable.define({
         $:Cable.library("../bower_components/jquery/dist/jquery.min.js"),
@@ -91,29 +100,21 @@
         },
 
 
+        wires:function() {
+          var obj = {};
 
+          for (var k in wireMap) {
+            if (wireMap.hasOwnProperty(k)) {
+              (function(k) {
+                obj[k + "Wires"] = Cable.withArgs(["d3", k], function(d3, dat) {
+                  wire(d3, wireMap[k], dat());
+                });
+              })(k);
+            }
+          }
 
-        rWires:function(d3, r) {
-          wire(d3, "#path5053", r());
-        },
-        eWires:function(d3, e) {
-          wire(d3, "#path5065, #path5067, #path3944", e());
-        },
-        sWires:function(d3, s) {
-          wire(d3, "#path5061", s());
-        },        
-        andREWires:function(d3, andRE) {
-          wire(d3, "#path3061", andRE());
-        },
-        andESWires:function(d3, andES) {
-          wire(d3, "#path3628", andES());
-        },
-        norRWires:function(d3, norR) {
-          wire(d3, "#path3059, #path3746, #path3626, #path3252, #text3728", norR());
-        },
-        norSWires:function(d3, norS) {
-          wire(d3, "#path3624, #path3748, #path3636, #path3726, #text3732", norS());
-        },
+          return obj;
+        }(),
 
         initNors:function(init) {
           Cable.initialize("norR", false);
