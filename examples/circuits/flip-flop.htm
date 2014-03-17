@@ -1,0 +1,115 @@
+<html>
+  <head>
+    <title>Cable</title>
+    <style>
+      html, body { font-family: sans-serif; }
+      #main {
+        width: 500px;
+        margin: 30px auto;
+        padding: 10px;
+        border:1px solid #ccc;
+        position: relative;
+      }
+      input[type="checkbox"] { position: absolute; }
+    </style>
+  </head>
+  <body>
+    <div id="main">
+      <input type="checkbox" value="value" id="r" />
+      <input type="checkbox" value="value" id="e" />
+      <input type="checkbox" value="value" id="s" />
+      <div id="diagram"></div>
+      <p id="clk"></p>
+    </div>
+    
+    <script src="../../cable.min.js"></script>
+    <script>
+      function wire(d3, sel, val) {
+        var color = val ? "red" : "black"
+        d3.selectAll(sel).style({ stroke:color });
+      }
+
+      Cable.define({
+        $:Cable.library("../bower_components/jquery/dist/jquery.min.js"),
+        d3:Cable.library("../bower_components/d3/d3.min.js"),
+
+        diagram:Cable.text("flip-flop-diagram.svg"),
+        setDiag:function(init, $, d3, diagram) {
+          $(diagram()).appendTo("#diagram");
+
+          var
+            parent = $("svg").offset(),
+            groups = { r:"g3738", e:"g5073", s:"g3742" },
+            rect;
+          for (var k in groups) {
+            rect = d3
+              .select("svg")
+              .select("#" + groups[k])[0][0]
+              .getBoundingClientRect();
+            $("#" + k).css({ 
+              left:rect.left - parent.left + 5,
+              top:rect.top - parent.top + 3.5
+            });
+          }          
+        },
+
+        clk:{ 
+          main:Cable.data(false),
+          period:Cable.interval(500),
+          strike:function(_main, period) {
+            _main(!_main());
+          },
+          fall:function(main, respond) { if (!main()) { respond(false); } }
+        },
+
+        showClk:function($, clk) { 
+          $("#clk")
+            .text("CLK: " + (clk() ? "rise" : "fall"))
+            .css("color", clk() ? "red" : "black");
+        },
+
+        r:Cable.checkbox("#r"),
+        e:Cable.checkbox("#e"),
+        s:Cable.checkbox("#s"),
+
+        andRE:function(_r, _e, clk_fall, result) { result(_r() && _e()); },
+        andES:function(_e, _s, clk_fall, result) { result(_e() && _s()); },
+
+        norR:function(_andRE, _norS, clk_fall, result) {
+          result(!(_andRE() || _norS()));
+        },
+        norS:function(_andES, _norR, clk_fall, result) {
+          result(!(_andES() || _norR()));
+        },
+
+        rWires:function(d3, r) {
+          wire(d3, "#path5053", r());
+        },
+        eWires:function(d3, e) {
+          wire(d3, "#path5065, #path5067, #path3944", e());
+        },
+        sWires:function(d3, s) {
+          wire(d3, "#path5061", s());
+        },        
+        andREWires:function(d3, andRE) {
+          wire(d3, "#path3061", andRE());
+        },
+        andESWires:function(d3, andES) {
+          wire(d3, "#path3628", andES());
+        },
+        norRWires:function(d3, norR) {
+          wire(d3, "#path3059, #path3746, #path3626, #path3252, #text3728", norR());
+        },
+        norSWires:function(d3, norS) {
+          wire(d3, "#path3624, #path3748, #path3636, #path3726, #text3732", norS());
+        },
+
+        initNors:function(init) {
+          Cable.initialize("norR", false);
+          Cable.initialize("norS", false);
+        }
+
+      });
+    </script>
+  </body>
+</html>

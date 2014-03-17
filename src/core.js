@@ -21,7 +21,7 @@ function getArgNames(fn) {
   }
   else {
     return (fn + "")
-      .match(/^function(\s+\S*)?\(([^)]+)\)/)[2]
+      .match(/^function(\s*)?\(([^)]*)\)/m)[2]
       .split(",")
       .map(function(x) { return x.replace(/(^\s+)|(\s+$)/g, ""); });
   }
@@ -402,9 +402,14 @@ var yields = {
   },
 
   synthetic:function(name, fn) {
-    fn(function() {
-      return graph[name].value;
-    });
+    if (!graph[name].invoked) {
+      evaluate(name, function() { });
+    }
+    else {
+      fn(function() {
+        return graph[name].value;
+      });
+    }
   },
 
   effect:function() { /* Do anything here? */ },
@@ -479,9 +484,10 @@ var evaluators = {
 
       deps.splice(graph[name].resultIndex, 0, function(result) {
 
+        graph[name].invoked = true;
+
         if (graph[name].value != result || !graph[name].coalesce) {
           graph[name].value = result;
-          graph[name].invoked = true;
           triggerDownstream(name);
         }
 
@@ -565,12 +571,20 @@ function allDependenciesEvaluated(name) {
       return false;
     }
   }
+
   return true;
 }
 
 function triggerDownstream(name) {
   graph[name].out.forEach(trigger);
 }
+
+Cable.initialize = function(name, value) {
+  if (graph[name].type === "synthetic") {
+    graph[name].value = value;
+    graph[name].invoked = true;
+  }
+};
 
 Cable._debug = function() { return graph; };
 

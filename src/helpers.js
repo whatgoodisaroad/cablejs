@@ -42,6 +42,9 @@ Cable.event = function(selector, events, property, triggerOnLoad) {
               else if (/^data-[-_a-zA-Z0-9]+/.test(property)) {
                 val = obj.attr(property);
               }
+              else if (property === ":checked") {
+                val = obj.is(":checked");
+              }
 
               fn(val);
             },
@@ -73,6 +76,10 @@ Cable.event = function(selector, events, property, triggerOnLoad) {
 
 Cable.textbox = function(selector) {
   return Cable.event(selector, "change keyup", "value", true);
+};
+
+Cable.checkbox = function(selector) {
+  return Cable.event(selector, "change", ":checked", true);
 };
 
 Cable.returnKey = function(selector) {
@@ -246,5 +253,17 @@ Cable.json = function(fn) {
         }
       });
     }
+  };
+};
+
+Cable.text = function(url) {
+  return function($, result) {
+    $.ajax({ 
+      url:url,
+      dataType:"text",
+      success:function(text) { 
+        result(text); 
+      }
+    });
   };
 };
