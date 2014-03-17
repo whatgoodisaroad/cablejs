@@ -4,13 +4,14 @@
     <style>
       html, body { font-family: sans-serif; }
       #main {
-        width: 500px;
+        width: 320px;
         margin: 30px auto;
         padding: 10px;
         border:1px solid #ccc;
         position: relative;
       }
       input[type="checkbox"] { position: absolute; }
+      #about { color:#666; }
     </style>
   </head>
   <body>
@@ -20,6 +21,12 @@
       <input type="checkbox" value="value" id="s" />
       <div id="diagram"></div>
       <p id="clk"></p>
+      <p id="about">
+        This is a simulation of a 
+        <a href="http://en.wikipedia.org/wiki/Flip-flop_(electronics)#Gated_SR_latch">
+          Gated SR Latch
+        </a>
+      </p>
     </div>
     
     <script src="../../cable.min.js"></script>
@@ -33,6 +40,7 @@
         $:Cable.library("../bower_components/jquery/dist/jquery.min.js"),
         d3:Cable.library("../bower_components/d3/d3.min.js"),
 
+        // http://en.wikipedia.org/wiki/Flip-flop_(electronics)
         diagram:Cable.text("flip-flop-diagram.svg"),
         setDiag:function(init, $, d3, diagram) {
           $(diagram()).appendTo("#diagram");
@@ -81,6 +89,9 @@
         norS:function(_andES, _norR, clk_fall, result) {
           result(!(_andES() || _norR()));
         },
+
+
+
 
         rWires:function(d3, r) {
           wire(d3, "#path5053", r());
