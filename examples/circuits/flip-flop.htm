@@ -22,19 +22,12 @@
       <div id="diagram"></div>
       <p id="clk"></p>
       <p id="about">
-        This is a simulation of a 
-        <a href="http://en.wikipedia.org/wiki/Flip-flop_(electronics)#Gated_SR_latch">
-          Gated SR Latch</a>.
+        This is a simulation of a <a href="http://en.wikipedia.org/wiki/Flip-flop_(electronics)#Gated_SR_latch">Gated SR Latch</a>.
       </p>
     </div>
     
     <script src="../../cable.min.js"></script>
     <script>
-      function wire(d3, sel, val) {
-        var color = val ? "red" : "black"
-        d3.selectAll(sel).style({ stroke:color });
-      }
-
       var wireMap = {
         r:    "#path5053",
         e:    "#path5065, #path5067, #path3944",
@@ -45,31 +38,48 @@
         norS: "#path3624, #path3748, #path3636, #path3726, #text3732"
       };
 
-      Cable.define({
-        $:Cable.library("../bower_components/jquery/dist/jquery.min.js"),
-        d3:Cable.library("../bower_components/d3/d3.min.js"),
+      function makeWireHighlighter(name, ids) {
+        return Cable.withArgs(["d3", name], function(d3, data) {
+          d3.selectAll(ids).style({ stroke:data() ? "red" : "black" });
+        });
+      }
 
-        // http://en.wikipedia.org/wiki/Flip-flop_(electronics)
+      var wires = {};
+      for (var name in wireMap) {
+        if (wireMap.hasOwnProperty(name)) {
+          wires[name + "Wires"] = makeWireHighlighter(name, wireMap[name]);
+        }
+      }
+
+      Cable.define({
+        $:  Cable.library("../bower_components/jquery/dist/jquery.min.js"),
+        d3: Cable.library("../bower_components/d3/d3.min.js"),
+
         diagram:Cable.text("flip-flop-diagram.svg"),
-        setDiag:function(init, $, d3, diagram) {
+        showDiagram:function(init, $, d3, diagram) {
+          //  Attach the SVG to the page:
           $(diagram()).appendTo("#diagram");
 
+          //  Position the textboxes over their respective input nodes:
           var
             parent = $("svg").offset(),
-            groups = { r:"g3738", e:"g5073", s:"g3742" },
+            nodes = { r:"g3738", e:"g5073", s:"g3742" },
             rect;
-          for (var k in groups) {
-            rect = d3
-              .select("svg")
-              .select("#" + groups[k])[0][0]
-              .getBoundingClientRect();
-            $("#" + k).css({ 
-              left:rect.left - parent.left + 5,
-              top:rect.top - parent.top + 3.5
-            });
-          }          
+          for (var k in nodes) {
+            if (nodes.hasOwnProperty(k)) {
+              rect = d3
+                .select("svg")
+                .select("#" + nodes[k])[0][0]
+                .getBoundingClientRect();
+              $("#" + k).css({ 
+                left:rect.left - parent.left + 5,
+                top:rect.top - parent.top + 3.5
+              });
+            }
+          }
         },
 
+        //  Define a clock for the circuit:
         clk:{ 
           main:Cable.data(false),
           period:Cable.interval(500),
@@ -85,6 +95,8 @@
             .css("color", clk() ? "red" : "black");
         },
 
+        //  Define the circuit:
+
         r:Cable.checkbox("#r"),
         e:Cable.checkbox("#e"),
         s:Cable.checkbox("#s"),
@@ -99,23 +111,11 @@
           result(!(_andES() || _norR()));
         },
 
+        //  Wireup for highlighting the cables red when enabled:
+        wires:wires,
 
-        wires:function() {
-          var obj = {};
-
-          for (var k in wireMap) {
-            if (wireMap.hasOwnProperty(k)) {
-              (function(k) {
-                obj[k + "Wires"] = Cable.withArgs(["d3", k], function(d3, dat) {
-                  wire(d3, wireMap[k], dat());
-                });
-              })(k);
-            }
-          }
-
-          return obj;
-        }(),
-
+        //  Initialize the two nor gates to prevent stack overflow on account of
+        //  self-reference.
         initNors:function(init) {
           Cable.initialize("norR", false);
           Cable.initialize("norS", false);
