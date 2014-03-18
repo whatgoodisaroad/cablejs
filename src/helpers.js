@@ -1,11 +1,17 @@
-// Helpers
-////////////////////////////////////////////////////////////////////////////////
+//  Independent helpers. A set of tools for constructing the graph which do not
+//  depend on any libraries.
+//..............................................................................
 
+//  Declare argument names for a function. This is useful for when the 
+//  dependencies of a cable are generated dynamically, or when the code is run 
+//  through a minifier which does renaming.
 Cable.withArgs = function(args, fn) {
   fn.argAliases = args;
   return fn;
 };
 
+//  Declare an element of state to be managed in the graph. Pass it an initial
+//  value and an optional set of data helpers.
 Cable.data = function(value, helpers) {
   var obj = { type:"data", value:value };
   if (helpers) {
@@ -14,99 +20,16 @@ Cable.data = function(value, helpers) {
   return obj;
 };
 
-Cable.event = function(selector, events, property, triggerOnLoad) {
-  return { 
-    type:"event",
-    coalesce:false,
-    wireup:function(fn) {
-      Cable.yield("$", function($) {
-        if (selector === "document" && events === "ready") {
-          $(document).ready(fn);
-        }
-        else {
-          var 
-            getter = function() {
-              var 
-                val = null,
-                obj = $(selector);
-
-              if (!property) {
-                property = "time";
-              }
-
-              if (property === "value") {
-                val = obj.val();
-
-                if (obj.is("[type='number']")) {
-                  val = parseFloat(val);
-                }
-              }
-              else if (property === "time") {
-                val = new Date();
-              }
-              else if (/^data-[-_a-zA-Z0-9]+/.test(property)) {
-                val = obj.attr(property);
-              }
-              else if (property === ":checked") {
-                val = obj.is(":checked");
-              }
-
-              fn(val);
-            },
-
-            handler;
-
-          if (events === "key-return") {
-            events = "keyup";
-            handler = function(evt) {
-              if (evt.keyCode === 13) {
-                getter();
-              }
-            };
-          }
-          else {
-            handler = getter;
-          }
-
-          $(document).on(events, selector, handler);
-
-          if (triggerOnLoad) {
-            getter();
-          }
-        }
-      });
-    }
-  };
-};
-
-Cable.textbox = function(selector) {
-  return Cable.event(selector, "change keyup", "value", true);
-};
-
-Cable.checkbox = function(selector) {
-  return Cable.event(selector, "change", ":checked", true);
-};
-
-Cable.returnKey = function(selector) {
-  return {
-    type:"event",
-    wireup:function(fn) {
-      Cable.yield("$", function($) {
-        $(selector).on("keyup", function(evt) {
-          if (evt.keyCode === 13) {
-            fn(new Date());
-          }
-        });
-      });
-    }
-  };
-};
-
+//  Declare the init event. This is an event which fires as soon as it is wired.
+//  Can be used as a dependency for functions which should be run when the page 
+//  loads.
 Cable.define(
   { init:{ type:"event", wireup:function(f) { f(new Date()); } } }, 
   { reify:false, wireup:false }
 );
 
+//  Experimental list modeling tool. A list is stored as state, but is 
+//  interfaced via slicing as with regular JS arrays.
 Cable.list = function(array) {
   return {
     array:Cable.data(array),
@@ -127,7 +50,7 @@ Cable.list = function(array) {
         }
       }
     ),
-    updater:function(main, _array) {
+    updater:Cable.withArgs(["main", "_array"], function(main, _array) {
       var 
         s = main(),
         a = _array().slice(0);
@@ -139,24 +62,30 @@ Cable.list = function(array) {
         a.splice(a.length - s.index, s.howMany, s.replacement);
       }
       _array(a);
-    }
-  };
+    })
+  }
 };
 
-Cable.interval = function(period) {
+//  Create an interval event. The period can be supplied by either a number of 
+//  milliseconds, or as the name of a cable which adjusts the period 
+//  dynamically.
+Cable.interval = function(period, triggerOnInit) {
   if (period.substring) {
+    var args = ["ref", "_pid"];
+    if (triggerOnInit) { 
+      args = args.concat("init");
+    }
     return {
       ref:Cable.reference(period),
       pid:Cable.data(-1),
-      main:function(ref, _pid, result) {
+      main:Cable.withArgs(args, function(ref, _pid, result) {
         clearInterval(_pid());
         var newPid = setInterval(
           function() { result(new Date()); },
           ref()
         );
-
         _pid(newPid);
-      }
+      })
     };
   }
   else {
@@ -165,15 +94,16 @@ Cable.interval = function(period) {
       defaultValue:new Date(),
       wireup:function(fn) {
         setInterval(function() { fn(new Date()); }, period);
+
+        if (triggerOnInit) {
+          fn(new Date());
+        }
       }
     };
   }
 };
 
-Cable.reference = function(name) {
-  return { type:"reference", referenceName:name };
-};
-
+//  Declare a library to import.
 Cable.library = function(path, shim) {
   return {
     type:"library",
@@ -182,47 +112,13 @@ Cable.library = function(path, shim) {
   }
 };
 
-Cable.template = function(selector, template) {
-  var
-    reg = /\{\{[_a-zA-Z0-9]+\}\}/g,
-    match = template.match(reg) || [],
-    deps = match.map(function(m) { return m.replace(/\{|\}/g, ""); });
-
-  var obj =  {
-    properties:Cable.pack(deps),
-    main:function(properties, $) {
-
-      function disp(v) {
-        if (typeof(v) === "number") {
-          return v.toFixed(2);
-        }
-        else {
-          return v;
-        }
-      }
-
-      var rend = template;
-      for (var idx = 0; idx < deps.length; ++idx) {
-        rend = rend.replace(
-          "{{" + deps[idx] + "}}", 
-          disp(properties()[deps[idx]])
-        );
-      }
-
-      $(selector).html(rend);
-    }
-  };
-
-  return obj;
-};
-
+//  Unify a set of cables into one.
 Cable.pack = function(args) {
   var fn = function (result) {
     var obj = { };
     for (var idx = 1; idx < fn.argAliases.length; ++idx) {
       obj[fn.argAliases[idx]] = arguments[idx]();
     }
-
     result(obj);
   };
 
@@ -233,6 +129,8 @@ Cable.pack = function(args) {
   return fn;
 };
 
+//  Declare a stateful integer counter, Useful for creating unique ids on the 
+//  fly.
 Cable.counter = function() {
   return Cable.data(-1, {
     next:function() {
@@ -241,34 +139,4 @@ Cable.counter = function() {
       return n;
     }
   });
-};
-
-Cable.json = function(fn) {
-  return {
-    url:fn,
-    main:function($, url, result) {
-      var cdr = /^http/.test(url()) && !/callback=/.test(url());
-
-      $.ajax({
-        dataType: "json",
-        url: url(),
-        crossDomain:!!cdr,
-        success: function(data) {
-          result(data);
-        }
-      });
-    }
-  };
-};
-
-Cable.text = function(url) {
-  return function($, result) {
-    $.ajax({ 
-      url:url,
-      dataType:"text",
-      success:function(text) { 
-        result(text); 
-      }
-    });
-  };
 };

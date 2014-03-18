@@ -1,3 +1,7 @@
+//  The runtime core. The cable object is declare here and all private code is
+//  declared inside the closure.
+//..............................................................................
+
 var Cable = {};
 
 (function() {
@@ -81,6 +85,9 @@ function extend(defaults, override) {
     return defaults;
   }
 }
+
+Cable._debug = function() { return graph; };
+
 
 //  Definition function. Essentially this is the interface for cable.
 Cable.define = function(object, options) {
@@ -585,7 +592,5 @@ Cable.initialize = function(name, value) {
     graph[name].invoked = true;
   }
 };
-
-Cable._debug = function() { return graph; };
 
 })();

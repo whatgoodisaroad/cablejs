@@ -27,14 +27,15 @@
       Cable.define({
         $:Cable.library("bower_components/jquery/dist/jquery.min.js"),
 
-        interval:Cable.interval(10000),
+        interval:Cable.interval(10000, true),
         intervalTime:function(init, interval, result) {
           result(interval().toLocaleTimeString());
         },
 
-        symbol:Cable.event("#symbol", "keyup change", "value", true),
+        symbol:Cable.textbox("#symbol"),
 
         quote:Cable.json(function(symbol, result, interval) {
+
           var 
             before = "http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.quotes%20where%20symbol%20in%20(%22",
             after = "%22)%0A%09%09&env=http%3A%2F%2Fdatatables.org%2Falltables.env&format=json";
