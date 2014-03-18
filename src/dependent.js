@@ -1,6 +1,7 @@
-//  Dependent helpers. A set of tools for constructing the graph which depend on
-//  at least one library. For example, jQuery for event bindings and DOM manip.
-//..............................................................................
+/*..............................................................................
+.  Dependent helpers. A set of tools for constructing the graph which depend on
+.  at least one library. For example, jQuery for event bindings and DOM manip.
+..............................................................................*/
 
 //  Super-generic event function.
 // 

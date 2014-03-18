@@ -1,6 +1,7 @@
-//  Independent helpers. A set of tools for constructing the graph which do not
-//  depend on any libraries.
-//..............................................................................
+/*..............................................................................
+.  Independent helpers. A set of tools for constructing the graph which do not
+.  depend on any libraries.
+..............................................................................*/
 
 //  Declare argument names for a function. This is useful for when the 
 //  dependencies of a cable are generated dynamically, or when the code is run 

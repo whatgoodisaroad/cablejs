@@ -12,22 +12,31 @@ function generateBanner() {
 
 module.exports = function(grunt) {
   
-  grunt.initConfig({
-    pkg: grunt.file.readJSON('package.json')
-  });
-
+  grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-closurecompiler');
 
-   grunt.initConfig({
+  grunt.initConfig({
+    pkg: grunt.file.readJSON('package.json'),
+
+    concat: {
+      options: {
+        stripBanners: true,
+        banner: generateBanner() + "\n"
+      },
+      dist: {
+        src: ["src/core.js", "src/helpers.js", "src/dependent.js"],
+        dest: 'cable.dev.js',
+      }
+    },
+
     closurecompiler: {
       minify: {
         files: {
-          // Destination: Sources...
           "cable.min.js": ["src/core.js", "src/helpers.js", "src/dependent.js"]
         },
         options: {
           // Any options supported by Closure Compiler, for example:
-          // "compilation_level": "WHITESPACE_ONLY",
+          
           "compilation_level": "SIMPLE_OPTIMIZATIONS",
 
           // Plus a simultaneous processes limit
@@ -40,7 +49,7 @@ module.exports = function(grunt) {
     }
   });
 
-  grunt.registerTask('build', ['closurecompiler:minify']); 
+  grunt.registerTask('build', ["concat:dist", 'closurecompiler:minify']); 
 
   grunt.registerTask('default', ['build']); 
 };
