@@ -3,11 +3,8 @@
     <title>Cable</title>
     <style>
       html, body { font-family: sans-serif; text-align: center; }
-      #main {
-        width: 500px;
-        margin: 30px auto;
-        padding: 10px;
-        border:1px solid #ccc;
+      #main { 
+        width: 500px; margin: 30px auto; padding: 10px; border:1px solid #ccc; 
       }
       #symbol { margin-bottom: 20px; }
       #name { font-size: 45px; }
@@ -28,14 +25,10 @@
         $:Cable.library("bower_components/jquery/dist/jquery.min.js"),
 
         interval:Cable.interval(10000, true),
-        intervalTime:function(init, interval, result) {
-          result(interval().toLocaleTimeString());
-        },
-
+        
         symbol:Cable.textbox("#symbol"),
 
-        quote:Cable.json(function(symbol, result, interval) {
-
+        quoteData:Cable.json(function(symbol, result, interval) {
           var 
             before = "http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.quotes%20where%20symbol%20in%20(%22",
             after = "%22)%0A%09%09&env=http%3A%2F%2Fdatatables.org%2Falltables.env&format=json";
@@ -43,24 +36,33 @@
           result(before + symbol() + after);
         }),
 
-        ask:function(quote, result) {
-          var val = "N/A";
-          if (quote().query.results.quote.AskRealtime) {
-            val = quote().query.results.quote.AskRealtime;
+        quote:function(quoteData, result) {
+          if (
+            quoteData().query.results &&
+            quoteData().query.results.quote.AskRealtime != null
+          ) {
+            result({
+              askingPrice:quoteData().query.results.quote.AskRealtime,
+              name:quoteData().query.results.quote.Name
+            });
           }
-          result(val);
+          else {
+            result({
+              askingPrice:"N/A",
+              name:"{ Unknown Company }"
+            });
+          }
         },
 
-        name:function(quote, result) {
-          var val = "{ Unknown Company }";
-          if (quote().query.results.quote.AskRealtime) {
-            val = quote().query.results.quote.Name;
-          }
-          result(val);
-        },
+        ask:function(quote, result) { result(quote().askingPrice); },
+        name:function(quote, result) { result(quote().name); },
 
         dispName:Cable.template("#name", "{{name}}"),
         dispAsk:Cable.template("#ask", "${{ask}} per share"),
+
+        intervalTime:function(init, interval, result) {
+          result(interval().toLocaleTimeString());
+        },
         dispTime:Cable.template("#updated", "Updated at {{intervalTime}}")
 
       });
