@@ -562,10 +562,6 @@ var evaluators = {
 };
 
 function trigger(name) {
-  if (!allDependenciesEvaluated(name)) {
-    return;
-  }
-
   evaluate(name, function() { });
 }
 

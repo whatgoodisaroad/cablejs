@@ -102,6 +102,19 @@ Cable.checkbox = function(selector) {
   return Cable.event(selector, "change", ":checked", true);
 };
 
+Cable.button = function(selector) {
+  return {
+    type:"event",
+    wireup:function(fn) {
+      Cable.yield("$", function($) {
+        $(selector).on("click", function() {
+          fn(new Date());
+        });
+      })
+    }
+  };
+};
+
 Cable.returnKey = function(selector) {
   return {
     type:"event",

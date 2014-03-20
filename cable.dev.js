@@ -1,6 +1,6 @@
 /*.......................................
 . cablejs: By Wyatt Allen, MIT Licenced .
-. 2014-03-18T22:13:04.591Z              .
+. 2014-03-20T03:06:48.806Z              .
 .......................................*/
 var Cable = {};
 
@@ -561,10 +561,6 @@ var evaluators = {
 };
 
 function trigger(name) {
-  if (!allDependenciesEvaluated(name)) {
-    return;
-  }
-
   evaluate(name, function() { });
 }
 
@@ -831,6 +827,19 @@ Cable.textbox = function(selector) {
 
 Cable.checkbox = function(selector) {
   return Cable.event(selector, "change", ":checked", true);
+};
+
+Cable.button = function(selector) {
+  return {
+    type:"event",
+    wireup:function(fn) {
+      Cable.yield("$", function($) {
+        $(selector).on("click", function() {
+          fn(new Date());
+        });
+      })
+    }
+  };
 };
 
 Cable.returnKey = function(selector) {

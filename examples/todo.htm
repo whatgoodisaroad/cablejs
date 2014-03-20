@@ -32,9 +32,9 @@
 
         todoList:Cable.list([ "Do the laundry" ]),
 
-        textbox:Cable.event("#new", "change keyup", "value", true),
+        textbox:Cable.textbox("#new"),
         textboxEnter:Cable.returnKey("#new"),
-        button:Cable.event("#add-button", "click", "time"),
+        button:Cable.button("#add-button"),
 
         add:function(button, textboxEnter, _textbox, _todoList, $) {
           if (_textbox().length) {
