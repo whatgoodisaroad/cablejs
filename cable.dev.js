@@ -1,6 +1,6 @@
 /*.......................................
 . cablejs: By Wyatt Allen, MIT Licenced .
-. 2014-03-20T03:06:48.806Z              .
+. 2014-03-21T22:33:38.204Z              .
 .......................................*/
 var Cable = {};
 
@@ -618,38 +618,49 @@ Cable.define(
 );
 
 //  Experimental list modeling tool. A list is stored as state, but is 
-//  interfaced via slicing as with regular JS arrays.
+//  interfaced by deltas.
 Cable.list = function(array) {
   return {
     array:Cable.data(array),
     main:Cable.data(
-      { index:0, howMany:0, replacement:array }, 
+      { type:"initialize", array:array }, 
       {
-        splice:function(i, h, r) {
-          this({ index:i, howMany:h, replacement:r });
+        insertAt:function(index, e) {
+          this({ type:"insert", index:index, element:e });
         },
         prepend:function(e) {
-          this({ index:0, howMany:0, replacement:[e] });
+          this({ type:"insert", index:0, element:e });
         },
         append:function(e) {
-          this({ index:-1, howMany:0, replacement:[e] });
+          this({ type:"insert", index:-1, element:e });
         },
-        updateAt:function(index, replacement) {
-          this({ index:index, howMany:1, replacement:[replacement] });
+        updateAt:function(index, updates) {
+          this({ type:"update", index:index, updates:updates });
+        },
+        deleteAt:function(index) {
+          this({ type:"delete", index:index });
         }
       }
     ),
     updater:Cable.withArgs(["main", "_array"], function(main, _array) {
       var 
-        s = main(),
+        m = main(),
         a = _array().slice(0);
 
-      if (s.index >= 0) {
-        a.splice(s.index, s.howMany, s.replacement);
+      if (m.type === "insert") {
+        a.splice(m.index >= 0 ? m.index : a.length, 0, m.element);
       }
-      else {
-        a.splice(a.length - s.index, s.howMany, s.replacement);
+      else if (m.type === "update") {
+        for (var k in m.updates) {
+          if (m.updates.hasOwnProperty(k)) {
+            a[m.index][k] = m.updates[k];
+          }
+        }
       }
+      else if (m.type === "delete") {
+        a.splice(m.index, 1);
+      }
+      
       _array(a);
     })
   }

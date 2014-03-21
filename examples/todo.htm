@@ -25,12 +25,20 @@
       <ul id="list"></ul>
     </div>
 
-    <script src="../cable.min.js"></script>
+    <script src="../cable.dev.js"></script>
     <script>
+      function createLi(item) {
+        return $("<li/>")
+          .text(item.name)
+          .toggleClass("done", item.isDone);
+      }
+    
       Cable.define({
         $:Cable.library("bower_components/jquery/dist/jquery.min.js"),
 
-        todoList:Cable.list([ "Do the laundry" ]),
+        todoList:Cable.list([
+          { name:"Do the laundry", isDone:false }
+        ]),
 
         textbox:Cable.textbox("#new"),
         textboxEnter:Cable.returnKey("#new"),
@@ -38,34 +46,35 @@
 
         add:function(button, textboxEnter, _textbox, _todoList, $) {
           if (_textbox().length) {
-            _todoList.append(_textbox());
-            $("#new").val("").trigger("change");
+            _todoList.append({ name:_textbox(), isDone:false });
+            $("#new").val("");
+            _textbox("");
           }
         },
 
-        itemCounter:Cable.counter(),
-
-        displayList:function(init, todoList, $, _itemCounter) {
-          var splice = todoList();
-
-          // Remove elements to be removed:
-          var toRemove = [];
-          for (var idx = 0; idx < splice.howMany.length; ++idx) {
-            toRemove.push("ul#list li:eq(" + (splice.index + idx) + ")");
+        displayList:function(init, todoList, $) {
+          if (todoList().type === "initialize") {
+            $.each(todoList().array, function(i, e) {
+              createLi(e).appendTo("ul#list");
+            });
           }
-          $(toRemove.join(", ")).remove();
+          else if (todoList().type === "insert") {
+            var li = createLi(todoList().element);
 
-          //  Add the new elements:
-          for (var idx = 0; idx < splice.replacement.length; ++idx) {
-            var o = $("<li/>")
-              .text(splice.replacement[idx])
-              .attr("data-id", _itemCounter.next());
-
-            if (splice.index === -1 || !$("ul#list li").length) {
-              $("ul#list").append(o);
+            if (todoList().index === 0) {
+              li.prependTo("ul#list");
+            }
+            else if (todoList().index === -1) {
+              li.appendTo("ul#list");
             }
             else {
-              $("ul#list li:eq(" + (splice.index + idx) + ")").after(o);
+              li.insertAfter("ul#list li:eq(" + todoList().index + ")");
+            }
+          }
+          else if (todoList().type === "update") {
+            if (todoList().updates.hasOwnProperty("isDone")) {
+              $("ul#list li:eq(" + todoList().index + ")")
+                .toggleClass("done", todoList().updates.isDone);
             }
           }
         },
@@ -75,14 +84,14 @@
           wireup:function(fn) {
             Cable.yield("$", function($) {
               $(document).on("click", "ul#list li", function(evt) { 
-                fn($(evt.target).attr("data-id")); 
+                fn($(evt.target).index()); 
               });
             });
           }
         },
 
-        finishTask:function($, taskClicked) { 
-          $("#list li[data-id='" + taskClicked() + "']").toggleClass("done");
+        finishTask:function(taskClicked, _todoList) { 
+          _todoList.updateAt(taskClicked(), { isDone:true });
         }
       });
     </script>
