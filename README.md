@@ -9,7 +9,7 @@ an effect system, a module loader and dependency injector all unified under a
 common syntax.
 
 One way to think of cable.js is in terms of require.js. Require allows you to 
-write scripts that depends on other scripts. This is generally only used at 
+write scripts that depend on other scripts. This is generally only used at 
 module-level granularity, but the internals of require.js handle all the 
 dependencies for you. But what if you wanted code that depended on *data*, or 
 an *event*, or a live-updating JSON feed? Cable.js works like a fancy require.js
