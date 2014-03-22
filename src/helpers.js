@@ -83,12 +83,11 @@ Cable.list = function(array) {
 //  dynamically.
 Cable.interval = function(period, triggerOnInit) {
   if (period.substring) {
-    var args = ["ref", "_pid"];
+    var args = [period, "_pid"];
     if (triggerOnInit) { 
       args = args.concat("init");
     }
     return {
-      ref:Cable.reference(period),
       pid:Cable.data(-1),
       main:Cable.withArgs(args, function(ref, _pid, result) {
         clearInterval(_pid());

@@ -140,7 +140,7 @@ Cable.define = function(object, options) {
     if (install.hasOwnProperty(type)) {
       install[type](name, cable, options.scope);
     }
-    else if (type !== "sub" && type !== "reference") {
+    else if (type !== "sub") {
       throw "Illegal definiton: could not determine meaning of " + name;
     }
   });
@@ -215,6 +215,9 @@ function loadModules(fn) {
   loadAll(modules);
 }
 
+//  A collection of installer functions for each type of node. The type can be 
+//  determined up-front, but a apecialized installer creates the actual node for
+//  the graph.
 var install = {
   data:function(name, obj, scope) {
     graph[name] = {
@@ -309,14 +312,6 @@ var install = {
 
   sub:function(name, obj, scope) {
     var newObj = { };
-
-    // Find references:
-    var references = { };
-    each(obj, function(subobj, subname) {
-      if (subobj.type === "reference") {
-        references[subname] = subobj.referenceName;
-      }
-    });
 
     each(obj, function(subobj, subname) {
       var newName = subname === "main" ? name : name + "_" + subname;
@@ -414,27 +409,11 @@ function reify() {
 
         //  Otherwise it's a bad reference:
         else {
-          function showContext(context) {
-            var refs = [];
-            each(context.references, function(ref, name) {
-              refs.push("'" + name + "' ==> '" + ref + "'");
-            })
-            return (
-              "named '" + context.name + "'" + 
-              " and references {" + 
-              refs.join(", ") +
-              "}"
-            );
-          }
-
           throw "Reference to undefined node '" +
             depName +
             "' as dependency of '" +
             nodeName +
-            "'" + 
-            (node.hasOwnProperty("context") ?
-              " in context " + showContext(node.context) :
-              "");
+            "'";
         }
       });
     }
