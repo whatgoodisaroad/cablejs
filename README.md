@@ -8,7 +8,7 @@ cable.js is an Functional Reactive Programming (FRP) runtime, an event system,
 an effect system, a module loader and dependency injector all unified under a 
 common syntax.
 
-One way to think of cable.js is in terms of requrie.js. Require allows you to 
+One way to think of cable.js is in terms of require.js. Require allows you to 
 write scripts that depends on other scripts. This is generally only used at 
 module-level granularity, but the internals of require.js handle all the 
 dependencies for you. But what if you wanted code that depended on *data*, or 
@@ -46,12 +46,12 @@ a similar manner to how Require.js works.
 
 As you can see, the two libraries are declared by providing an object where the 
 libraries are given a name (in this case `$` and `marked`) and are declared 
-using `Cable.library("")` with a path to the javascript file.
+using `Cable.library("")` with a path to the JavaScript file.
 
 Next, we need access to the `<textarea>` where the user types markdown code. We 
 can add the `<textarea>` to the cable system **in the same way that we added
 libraries.** In this case, we call it `source` and use the `Cable.textbox("")` 
-function, which accepts a CSS selector for the unput element.
+function, which accepts a CSS selector for the input element.
 
     Cable.define({
       source:Cable.textbox("#input")
