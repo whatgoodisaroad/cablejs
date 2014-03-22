@@ -11,6 +11,9 @@ var reserved = "result respond define type event".split(" ");
 
 var graph = { };
 
+Cable._debug = function() { return graph; };
+
+//  Safely loop over an object's properties.
 function each(obj, fn) {
   for (var key in obj) {
     if (obj.hasOwnProperty(key)) {
@@ -18,6 +21,7 @@ function each(obj, fn) {
     }
   }
 };
+Cable.each = each;
 
 //  Find the argument names of a function.
 function getArgNames(fn) {
@@ -34,8 +38,8 @@ function getArgNames(fn) {
 
 //  Gets the list of properties which should be fed into the function as 
 //  arguments. Essentially, this is the list of argument names excluding 
-//  reserved words and with leading underscores removed. Each one should refer to 
-//  a  extant node (contextualized).
+//  reserved words and with leading underscores removed. Each one should refer 
+//  to an existing node
 function getFanIn(fn, context) {
   return getArgNames(fn)
     .filter(function(arg) {
@@ -47,8 +51,8 @@ function getFanIn(fn, context) {
 }
 
 //  Gets the list of nodes which are dependencies and which can trigger this 
-//  node. In other words, it is the arguments excluding reserved words and arguments
-//  with leading underscores.
+//  node. In other words, it is the arguments excluding reserved words and 
+//  arguments with leading underscores.
 function getDependencies(fn, context) {
   return getArgNames(fn)
     .filter(function(arg) {
@@ -86,9 +90,6 @@ function extend(defaults, override) {
     return defaults;
   }
 }
-
-Cable._debug = function() { return graph; };
-
 
 //  Definition function. Essentially this is the interface for cable.
 Cable.define = function(object, options) {
@@ -144,6 +145,7 @@ Cable.define = function(object, options) {
     }
   });
 
+  //  If we are reifying, the modules have to be evaluated first.
   if (options.reify || options.wireup) {
     loadModules(function() {
       if (options.reify) {
@@ -156,7 +158,10 @@ Cable.define = function(object, options) {
   }
 };
 
+//  Evaluate the modules, and invoke a callback when they are done.
 function loadModules(fn) {
+
+  //  Find the names of the modules in the graph.
   var modules = [];
   for (var name in graph) {
     if (graph.hasOwnProperty(name) && graph[name].type === "module") {
@@ -164,6 +169,8 @@ function loadModules(fn) {
     }
   }
 
+  //  Given a list of names, recursively, asynchronously load them all in 
+  //  sequence.
   function loadAll(names) {
     if (names.length) {
       var name = names[0];
@@ -172,20 +179,27 @@ function loadModules(fn) {
 
       req.onreadystatechange = function() {
         if (this.readyState === 4 && this.status === 200) {
-          var text = this.responseText;
+          var text = "(" + this.responseText + ")";
 
+          //  We now have the sourcecode for the module. The module in the 
+          //  graph acts as a placeholder. We need to substitute it with the 
+          //  source code. This means deleting the placeholder and then defining
+          //  the source under the same name.
+
+          //  Remove:
           delete graph[name];
-          var obj = { };
 
+          //  Define:
+          var obj = { };
           try {
-            obj[name] = eval("(" + text + ")");
+            obj[name] = eval(text);
           }
           catch (exc) {
             throw "Failed to load module '" + name + "': " + exc;
           }
-
           Cable.define(obj, { reify:false, wireup:false });
 
+          //  Recurse:
           loadAll(names.slice(1));
         }
       }
@@ -199,8 +213,6 @@ function loadModules(fn) {
   }
 
   loadAll(modules);
-  
-  fn();
 }
 
 var install = {
