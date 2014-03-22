@@ -44,9 +44,13 @@ markdown compiler.
       }
     });
 
-That's it! This is all the code needed to have a live upading preview. A working
-example of this tool can be found in `examples/markdown.htm` in the repository.
-Consult the *Building* section of the readme for help running the example.
+That's it! This is all the code needed to have a live updating preview. It's 
+vanilla JavaScript running in strict mode: no fake pseudo-JS syntax that needs 
+to be pre-processed. No magic markup tags that need to be synchronized.
+
+A working example of this previewer can be found in `examples/markdown.htm` in 
+the repository. Consult the *Building* section of the readme for help running 
+the example.
 
 Cable can do much more. There are a number of different kinds of nodes which can
 be added to the graph, including different kinds of events, data-sources, 
