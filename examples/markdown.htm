@@ -26,10 +26,9 @@
         marked:Cable.library("bower_components/marked/lib/marked.js"),
 
         source:Cable.textbox("#input"),
-        dest:function(source, marked, $) {
+        dest:function($, marked, source) {
           $("#output").html(marked(source()));
         }
-
       });
     </script>
   </body>
