@@ -1,6 +1,6 @@
 /*.......................................
 . cablejs: By Wyatt Allen, MIT Licenced .
-. 2014-03-21T22:33:38.204Z              .
+. 2014-03-22T06:04:23.530Z              .
 .......................................*/
 var Cable = {};
 
@@ -143,14 +143,64 @@ Cable.define = function(object, options) {
     }
   });
 
-  if (options.reify) {
-    reify();
-  }
-
-  if (options.wireup) {
-    wireup();
+  if (options.reify || options.wireup) {
+    loadModules(function() {
+      if (options.reify) {
+        reify();
+      }
+      if (options.wireup) {
+        wireup();
+      }
+    });
   }
 };
+
+function loadModules(fn) {
+  var modules = [];
+  for (var name in graph) {
+    if (graph.hasOwnProperty(name) && graph[name].type === "module") {
+      modules.push(name);
+    }
+  }
+
+  function loadAll(names) {
+    if (names.length) {
+      var name = names[0];
+
+      var req = new XMLHttpRequest();
+
+      req.onreadystatechange = function() {
+        if (this.readyState === 4 && this.status === 200) {
+          var text = this.responseText;
+
+          delete graph[name];
+          var obj = { };
+
+          try {
+            obj[name] = eval("(" + text + ")");
+          }
+          catch (exc) {
+            throw "Failed to load module '" + name + "': " + exc;
+          }
+
+          Cable.define(obj, { reify:false, wireup:false });
+
+          loadAll(names.slice(1));
+        }
+      }
+
+      req.open("get", graph[name].url, true);
+      req.send();
+    }
+    else {
+      fn();
+    }
+  }
+
+  loadAll(modules);
+  
+  fn();
+}
 
 var install = {
   data:function(name, obj, scope) {
@@ -269,6 +319,14 @@ var install = {
         }
       }
     );
+  },
+
+  module:function(name, obj, scope) {
+    graph[name] = {
+      type:"module",
+      url:obj.url,
+      scope:scope
+    };
   }
 };
 
@@ -709,6 +767,13 @@ Cable.library = function(path, shim) {
     type:"library",
     path:path,
     shim:shim
+  }
+};
+
+Cable.module = function(url) {
+  return {
+    type:"module",
+    url:url
   }
 };
 

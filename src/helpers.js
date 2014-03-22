@@ -124,6 +124,13 @@ Cable.library = function(path, shim) {
   }
 };
 
+Cable.module = function(url) {
+  return {
+    type:"module",
+    url:url
+  }
+};
+
 //  Unify a set of cables into one.
 Cable.pack = function(args) {
   var fn = function (result) {

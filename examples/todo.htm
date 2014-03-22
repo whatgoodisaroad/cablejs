@@ -27,7 +27,7 @@
 
     <script src="../cable.dev.js"></script>
     <script>
-      function createLi(item) {
+      function createLi($, item) {
         return $("<li/>")
           .text(item.name)
           .toggleClass("done", item.isDone);
@@ -55,11 +55,11 @@
         displayList:function(init, todoList, $) {
           if (todoList().type === "initialize") {
             $.each(todoList().array, function(i, e) {
-              createLi(e).appendTo("ul#list");
+              createLi($, e).appendTo("ul#list");
             });
           }
           else if (todoList().type === "insert") {
-            var li = createLi(todoList().element);
+            var li = createLi($, todoList().element);
 
             if (todoList().index === 0) {
               li.prependTo("ul#list");
