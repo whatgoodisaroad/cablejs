@@ -1,7 +1,9 @@
 /*.......................................
 . cablejs: By Wyatt Allen, MIT Licenced .
-. 2014-03-22T06:24:31.506Z              .
+. 2014-03-22T20:03:35.261Z              .
 .......................................*/
+"use strict";
+
 var Cable = {};
 
 (function() {
@@ -139,7 +141,7 @@ Cable.define = function(object, options) {
     if (install.hasOwnProperty(type)) {
       install[type](name, cable, options.scope);
     }
-    else if (type !== "sub" && type !== "reference") {
+    else if (type !== "sub") {
       throw "Illegal definiton: could not determine meaning of " + name;
     }
   });
@@ -214,6 +216,9 @@ function loadModules(fn) {
   loadAll(modules);
 }
 
+//  A collection of installer functions for each type of node. The type can be 
+//  determined up-front, but a apecialized installer creates the actual node for
+//  the graph.
 var install = {
   data:function(name, obj, scope) {
     graph[name] = {
@@ -309,14 +314,6 @@ var install = {
   sub:function(name, obj, scope) {
     var newObj = { };
 
-    // Find references:
-    var references = { };
-    each(obj, function(subobj, subname) {
-      if (subobj.type === "reference") {
-        references[subname] = subobj.referenceName;
-      }
-    });
-
     each(obj, function(subobj, subname) {
       var newName = subname === "main" ? name : name + "_" + subname;
       newObj[newName] = subobj;
@@ -368,23 +365,10 @@ function resolve(name, scope) {
   return null;
 }
 
-//  Reify the graph. The graph is an object of cable definitions. This expresses
-//  a graph in two subtly different ways. If we let each definition be a vertex
-//  they each have fan-in and fan-out defined in their in and out properties 
-//  respectively, however these do not necessarily express the same graph, 
-//  because whereas in enumerates how to construct arguments for the node, out
-//  enumerates which nodes can be subsequently triggered by that node and not
-//  necessarily all of the nodes which it fans into.
-// 
-//  Because of this asymmetry, we only need to reify the out-graph. This can be
-//  done by wiping every out list and reconstructing it by looping over every 
-//  node and allowing them to append their name to any other node's out list.
-//
-//  If there is no internal consistency (e.g. a node refers to a node that does
-//  not (or does not *yet*) exist), an exception will be thrown. If one is 
-//  defining intermediate graphs, one should hold of on reifying it until 
-//  consistency is expected. This is the reason that sub-definitions are 
-//  installed with reification disabled in Cable.define.
+//  Reify the graph. This basically takes the form of updating the out-links for
+//  each node. Since the in-links can be determined at definition, they are left
+//  as they are. The out links are constructed by erasing all out links, and
+//  progressively reinstating them for each node's in-links.
 function reify() {
 
   //  Pass 1: Clean all objects
@@ -413,27 +397,11 @@ function reify() {
 
         //  Otherwise it's a bad reference:
         else {
-          function showContext(context) {
-            var refs = [];
-            each(context.references, function(ref, name) {
-              refs.push("'" + name + "' ==> '" + ref + "'");
-            })
-            return (
-              "named '" + context.name + "'" + 
-              " and references {" + 
-              refs.join(", ") +
-              "}"
-            );
-          }
-
           throw "Reference to undefined node '" +
             depName +
             "' as dependency of '" +
             nodeName +
-            "'" + 
-            (node.hasOwnProperty("context") ?
-              " in context " + showContext(node.context) :
-              "");
+            "'";
         }
       });
     }
@@ -441,11 +409,12 @@ function reify() {
   });
 }
 
+//  For each event node on the graph which is not wired up, wire it.
 function wireup() {
   each(graph, function(node, nodeName) {
     if (node.type === "event" && !node.isWiredUp) {
       node.wireup(function(value) {
-        yield(nodeName, function(setter) {
+        generate(nodeName, function(setter) {
           setter(value);
         });
       });
@@ -454,7 +423,11 @@ function wireup() {
   });
 }
 
-var yields = {
+//  A collection of generator functions for each type of node. The generateed 
+//  value of a node is the value which shold be provided to dependent functions. 
+//  For example, for libraries, it's a the library itself. For events, it's a 
+//  getter/setter. For synthetics, it's a getter. Etc.
+var generators = {
   data:function(name, fn) {
     var access = function() {
       if (!arguments.length) {
@@ -510,42 +483,43 @@ var yields = {
     }
     else {
       evaluate(name, function() {
-        yield(name, fn);
+        generate(name, fn);
       });
     }
   }
 };
 
-function yield(name, fn) {
+//  Generic generate function. Determines the type of the node and dispatches 
+//  accordingly.
+function generate(name, fn) {
   if (graph.hasOwnProperty(name)) {
-    yields[graph[name].type](name, fn);
+    generators[graph[name].type](name, fn);
   }
   else {
-    throw "Cannot yield: '" + name + "' is not defined";
+    throw "Cannot generate: '" + name + "' is not defined";
   }
 }
+Cable.generate = generate;
 
-Cable.yield = yield;
-
-function yieldAll(names, fn, prefix) {
+function generateAll(names, fn, prefix) {
   if (prefix === undefined) { prefix = []; }
 
   if (!names.length) {
     fn(prefix);
   }
   else {
-    yield(names[0], function(value) {
-      yieldAll(names.slice(1), fn, prefix.concat([ value ]));
+    generate(names[0], function(value) {
+      generateAll(names.slice(1), fn, prefix.concat([ value ]));
     });
   }
 }
 
-function yieldIn(name, fn) {
+function generateIn(name, fn) {
   var resolved = graph[name]["in"].map(function(dep) {
     return resolve(dep, graph[name].scope);
   });
 
-  yieldAll(resolved, fn);
+  generateAll(resolved, fn);
 }
 
 function evaluate(name, fn) {
@@ -553,11 +527,11 @@ function evaluate(name, fn) {
 }
 
 var evaluators = {
-  data:yield.data,
-  event:yield.event,
+  data:generate.data,
+  event:generate.event,
 
   synthetic:function(name, fn) {
-    yieldIn(name, function(deps) {
+    generateIn(name, function(deps) {
 
       deps.splice(graph[name].resultIndex, 0, function(result) {
 
@@ -576,7 +550,7 @@ var evaluators = {
   },
 
   effect:function(name, fn) {
-    yieldIn(name, function(deps) {
+    generateIn(name, function(deps) {
       graph[name].fn.apply({ }, deps);
       fn();
     });
@@ -741,12 +715,11 @@ Cable.list = function(array) {
 //  dynamically.
 Cable.interval = function(period, triggerOnInit) {
   if (period.substring) {
-    var args = ["ref", "_pid"];
+    var args = [period, "_pid"];
     if (triggerOnInit) { 
       args = args.concat("init");
     }
     return {
-      ref:Cable.reference(period),
       pid:Cable.data(-1),
       main:Cable.withArgs(args, function(ref, _pid, result) {
         clearInterval(_pid());
@@ -827,7 +800,7 @@ Cable.event = function(selector, events, property, triggerOnLoad) {
     type:"event",
     coalesce:false,
     wireup:function(fn) {
-      Cable.yield("$", function($) {
+      Cable.generate("$", function($) {
         if (selector === "document" && events === "ready") {
           $(document).ready(fn);
         }
@@ -892,7 +865,7 @@ Cable.textbox = function(selector) {
   return {
     type:"event",
     wireup:function(fn) {
-      Cable.yield("$", function($) {
+      Cable.generate("$", function($) {
         var obj = $(selector);
 
         var getter = function() {
@@ -921,7 +894,7 @@ Cable.button = function(selector) {
   return {
     type:"event",
     wireup:function(fn) {
-      Cable.yield("$", function($) {
+      Cable.generate("$", function($) {
         $(selector).on("click", function() {
           fn(new Date());
         });
@@ -934,7 +907,7 @@ Cable.returnKey = function(selector) {
   return {
     type:"event",
     wireup:function(fn) {
-      Cable.yield("$", function($) {
+      Cable.generate("$", function($) {
         $(selector).on("keyup", function(evt) {
           if (evt.keyCode === 13) {
             fn(new Date());

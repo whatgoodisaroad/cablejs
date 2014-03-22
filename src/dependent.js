@@ -12,7 +12,7 @@ Cable.event = function(selector, events, property, triggerOnLoad) {
     type:"event",
     coalesce:false,
     wireup:function(fn) {
-      Cable.yield("$", function($) {
+      Cable.generate("$", function($) {
         if (selector === "document" && events === "ready") {
           $(document).ready(fn);
         }
@@ -77,7 +77,7 @@ Cable.textbox = function(selector) {
   return {
     type:"event",
     wireup:function(fn) {
-      Cable.yield("$", function($) {
+      Cable.generate("$", function($) {
         var obj = $(selector);
 
         var getter = function() {
@@ -106,7 +106,7 @@ Cable.button = function(selector) {
   return {
     type:"event",
     wireup:function(fn) {
-      Cable.yield("$", function($) {
+      Cable.generate("$", function($) {
         $(selector).on("click", function() {
           fn(new Date());
         });
@@ -119,7 +119,7 @@ Cable.returnKey = function(selector) {
   return {
     type:"event",
     wireup:function(fn) {
-      Cable.yield("$", function($) {
+      Cable.generate("$", function($) {
         $(selector).on("keyup", function(evt) {
           if (evt.keyCode === 13) {
             fn(new Date());

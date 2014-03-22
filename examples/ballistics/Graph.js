@@ -15,7 +15,7 @@ define(function() {
 
         x = d3.scale.linear().range([0, width]),
         y = d3.scale.linear().range([height, 0]),
-        v = d3.scale.linear().range([0,255])
+        v = d3.scale.linear().range([0,255]),
 
         xAxis = d3.svg.axis()
           .scale(x)

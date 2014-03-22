@@ -27,12 +27,6 @@
 
     <script src="../cable.dev.js"></script>
     <script>
-      function createLi($, item) {
-        return $("<li/>")
-          .text(item.name)
-          .toggleClass("done", item.isDone);
-      }
-    
       Cable.define({
         $:Cable.library("bower_components/jquery/dist/jquery.min.js"),
 
@@ -53,6 +47,12 @@
         },
 
         displayList:function(init, todoList, $) {
+          function createLi($, item) {
+            return $("<li/>")
+              .text(item.name)
+              .toggleClass("done", item.isDone);
+          }
+          
           if (todoList().type === "initialize") {
             $.each(todoList().array, function(i, e) {
               createLi($, e).appendTo("ul#list");
@@ -82,7 +82,7 @@
         taskClicked:{
           type:"event",
           wireup:function(fn) {
-            Cable.yield("$", function($) {
+            Cable.generate("$", function($) {
               $(document).on("click", "ul#list li", function(evt) { 
                 fn($(evt.target).index()); 
               });

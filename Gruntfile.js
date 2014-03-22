@@ -39,6 +39,8 @@ module.exports = function(grunt) {
           
           "compilation_level": "SIMPLE_OPTIMIZATIONS",
 
+          "language_in": "ECMASCRIPT5_STRICT",
+
           // Plus a simultaneous processes limit
           "max_processes": 5,
 

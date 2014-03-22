@@ -1,0 +1,36 @@
+<html>
+  <head>
+    <title>Cable</title>
+    <link 
+      rel="stylesheet" 
+      href="bower_components/bootstrap/dist/css/bootstrap.min.css" />
+    <style>
+      label { margin-top:20px; color:#888; }
+      #input, #output {  width: 100%; border: 1px solid #ccc; padding: 10px; }
+      #input { height: 400px; }
+    </style>
+  </head>
+  <body>
+
+    <div class="container">
+      <label for="input">Markdown Source:</label>
+      <textarea id="input">Type some **Markdown** code here!</textarea>
+      <label for="output">Result:</label>
+      <div id="output"></div>
+    </div>
+
+    <script src="../cable.min.js"></script>
+    <script>
+      Cable.define({
+        $:Cable.library("bower_components/jquery/dist/jquery.min.js"),
+        marked:Cable.library("bower_components/marked/lib/marked.js"),
+
+        source:Cable.textbox("#input"),
+        dest:function(source, marked, $) {
+          $("#output").html(marked(source()));
+        }
+
+      });
+    </script>
+  </body>
+</html>
