@@ -25,14 +25,16 @@ module.exports = function(grunt) {
       },
       dist: {
         src: ["src/core.js", "src/helpers.js", "src/dependent.js"],
-        dest: 'cable.dev.js',
+        dest: 'dist/cable.dev.js',
       }
     },
 
     closurecompiler: {
       minify: {
         files: {
-          "cable.min.js": ["src/core.js", "src/helpers.js", "src/dependent.js"]
+          "dist/cable.min.js": [
+            "src/core.js", "src/helpers.js", "src/dependent.js"
+          ]
         },
         options: {
           // Any options supported by Closure Compiler, for example:
