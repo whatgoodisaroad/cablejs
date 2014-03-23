@@ -7,8 +7,7 @@ An effect system and FRP runtime for JavaScript
 ## What is cable.js?
 
 cable.js is an Functional Reactive Programming (FRP) runtime, an event system,
-an effect system, a module loader and dependency injector all unified under a 
-common syntax.
+and module loader all unified under a common syntax.
 
 One way to think of cable.js is in terms of require.js. Require allows you to 
 write scripts that depend on other scripts. This is generally only used at 
@@ -61,7 +60,7 @@ be seen in the examples, but a tutorial and API documentation is coming soon.
 
 ## Building
 
-All the build dependncies are managed through NPM, so you'll need to install 
+All the build dependencies are managed through NPM, so you'll need to install 
 that first. One you've cloned the repository. You can install dependencies 
 locally using:
 
