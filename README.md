@@ -60,15 +60,12 @@ be seen in the examples, but a tutorial and API documentation is coming soon.
 
 ## Building
 
-All the build dependencies are managed through NPM, so you'll need to install 
-that first. One you've cloned the repository. You can install dependencies 
-locally using:
+To install dependencies and build cable.js:
 
     npm install
-
-At this point, you can now build cable.js using:
-
     grunt build
 
-To run the examples, you should also run `bower install` in the `examples` 
-directory to get front-end dependencies used by some of the examples.
+The examples have dependencies managed in bower:
+
+    cd examples
+    bower install
