@@ -2,6 +2,8 @@
 
 An effect system and FRP runtime for JavaScript
 
+![](https://raw.githubusercontent.com/whatgoodisaroad/cablejs/master/assets/cablejs-400x192.png)
+
 ## What is cable.js?
 
 cable.js is an Functional Reactive Programming (FRP) runtime, an event system,
