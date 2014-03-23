@@ -69,3 +69,16 @@ The examples have dependencies managed in bower:
 
     cd examples
     bower install
+
+## Roadmap
+
+* ☑ Functioning core system.
+* ☑ Builds and runs in strict mode.
+* ☑ Functioning examples.
+* ☑ Functioning cyclic dependency graphs.
+* ☐ Solidify what helpers depend on libraries (e.g. jQuery).
+* ☐ Streamline event definition syntax.
+* ☐ Implement tools for debugging the dependency graph (via `Cable._debug()`).
+* ☐ AMD loader needs to handle module dependencies.
+* ☐ Make the dependency graph more plastic (i.e. reconfigurable).
+* ☐ Add history sensitivity decorations.
