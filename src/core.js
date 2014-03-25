@@ -508,12 +508,22 @@ function generateAll(names, fn, prefix, overrides) {
   if (!names.length) {
     fn(prefix);
   }
-  else if (overrides.hasOwnProperty(names[0])) {
-    generateAll(names.slice(1), fn, prefix.concat([ overrides[names[0]] ]));
+  else if (overrides && overrides.hasOwnProperty(names[0])) {
+    generateAll(
+      names.slice(1), 
+      fn, 
+      prefix.concat([ overrides[names[0]] ]),
+      overrides
+    );
   }
   else {
     generate(names[0], function(value) {
-      generateAll(names.slice(1), fn, prefix.concat([ value ]));
+      generateAll(
+        names.slice(1), 
+        fn, 
+        prefix.concat([ value ]),
+        overrides
+      );
     });
   }
 }
@@ -599,26 +609,24 @@ var evaluators = {
 
       //  If it's a function:
       if (isFunction(arguments[argpos])) {
+        var factoryFunction = arguments[argpos];
 
-        //  If the module depends on an exports object, then use that as the 
-        //  result rather than the return valu of the function.
         if (dependencies.indexOf("exports") !== -1) {
           factory = function() {
-            arguments[argpos].apply(window, arguments);
-            return exports;
+            var ret = factoryFunction.apply(window, arguments);
+            return ret !== undefined ? ret : exports;
           };
         }
-
-        //  Otherwise just use the return value.
         else {
-          factory = arguments[argpos];
+          factory = factoryFunction;
         }
       }
 
       //  It's an object.
       else {
+        var factoryObject = arguments[argpos]
         factory = function() { 
-          return arguments[argpos]; 
+          return factoryObject; 
         };
       }
 

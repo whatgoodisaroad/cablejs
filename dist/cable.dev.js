@@ -1,6 +1,6 @@
 /*.......................................
 . cablejs: By Wyatt Allen, MIT Licenced .
-. 2014-03-22T23:41:20.439Z              .
+. 2014-03-25T21:34:07.113Z              .
 .......................................*/
 "use strict";
 
@@ -501,15 +501,28 @@ function generate(name, fn) {
 }
 Cable.generate = generate;
 
-function generateAll(names, fn, prefix) {
+function generateAll(names, fn, prefix, overrides) {
   if (prefix === undefined) { prefix = []; }
 
   if (!names.length) {
     fn(prefix);
   }
+  else if (overrides && overrides.hasOwnProperty(names[0])) {
+    generateAll(
+      names.slice(1), 
+      fn, 
+      prefix.concat([ overrides[names[0]] ]),
+      overrides
+    );
+  }
   else {
     generate(names[0], function(value) {
-      generateAll(names.slice(1), fn, prefix.concat([ value ]));
+      generateAll(
+        names.slice(1), 
+        fn, 
+        prefix.concat([ value ]),
+        overrides
+      );
     });
   }
 }
@@ -562,17 +575,76 @@ var evaluators = {
       return;
     }
 
+    //  Create a define function according to the AMD spec:
     var define = function() {
-      var idx = arguments.length - 1;
 
-      if (isFunction(arguments[idx])) {
-        graph[name].handle = arguments[idx]();
+      //  Because the id and dependencies arguments are optional, and because
+      //  the factory can be either a function or an object, we need to 
+      //  normalize the arguments.
+      var 
+        id,
+        dependencies,
+        factory,
+        exports,
+        argpos = 0;
+
+      //  If there is a module id.
+      if (arguments[argpos].substring) {
+        id = arguments[argpos++];
+      }
+      else { 
+        id = name;
+      }
+      
+      //  If there is a dependency list.
+      if (arguments[argpos].splice) {
+        dependencies = arguments[argpos++];
       }
       else {
-        graph[name].handle = arguments[idx];
+        dependencies = [ "require", "exports", "module" ];
       }
 
-      graph[name].loaded = true;
+      //  If there is a factory function/object:
+
+      //  If it's a function:
+      if (isFunction(arguments[argpos])) {
+        var factoryFunction = arguments[argpos];
+
+        if (dependencies.indexOf("exports") !== -1) {
+          factory = function() {
+            var ret = factoryFunction.apply(window, arguments);
+            return ret !== undefined ? ret : exports;
+          };
+        }
+        else {
+          factory = factoryFunction;
+        }
+      }
+
+      //  It's an object.
+      else {
+        var factoryObject = arguments[argpos]
+        factory = function() { 
+          return factoryObject; 
+        };
+      }
+
+      //  The arguments and factory are normalzed, we can invoke the factory.
+      generateAll(
+        dependencies, 
+        function() {
+          graph[name].handle = factory.apply(window, arguments);
+          graph[name].loaded = true;
+        },
+        [],
+        { 
+          require:function() { 
+            throw "Cable.js AMD loader does not support CommonJS style require.";
+          },
+          exports:exports,
+          module:null
+        }
+      );
     };
 
     define.amd = {};
