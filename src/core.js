@@ -502,11 +502,14 @@ function generate(name, fn) {
 }
 Cable.generate = generate;
 
-function generateAll(names, fn, prefix) {
+function generateAll(names, fn, prefix, overrides) {
   if (prefix === undefined) { prefix = []; }
 
   if (!names.length) {
     fn(prefix);
+  }
+  else if (overrides.hasOwnProperty(names[0])) {
+    generateAll(names.slice(1), fn, prefix.concat([ overrides[names[0]] ]));
   }
   else {
     generate(names[0], function(value) {
@@ -563,17 +566,78 @@ var evaluators = {
       return;
     }
 
+    //  Create a define function according to the AMD spec:
     var define = function() {
-      var idx = arguments.length - 1;
 
-      if (isFunction(arguments[idx])) {
-        graph[name].handle = arguments[idx]();
+      //  Because the id and dependencies arguments are optional, and because
+      //  the factory can be either a function or an object, we need to 
+      //  normalize the arguments.
+      var 
+        id,
+        dependencies,
+        factory,
+        exports,
+        argpos = 0;
+
+      //  If there is a module id.
+      if (arguments[argpos].substring) {
+        id = arguments[argpos++];
+      }
+      else { 
+        id = name;
+      }
+      
+      //  If there is a dependency list.
+      if (arguments[argpos].splice) {
+        dependencies = arguments[argpos++];
       }
       else {
-        graph[name].handle = arguments[idx];
+        dependencies = [ "require", "exports", "module" ];
       }
 
-      graph[name].loaded = true;
+      //  If there is a factory function/object:
+
+      //  If it's a function:
+      if (isFunction(arguments[argpos])) {
+
+        //  If the module depends on an exports object, then use that as the 
+        //  result rather than the return valu of the function.
+        if (dependencies.indexOf("exports") !== -1) {
+          factory = function() {
+            arguments[argpos].apply(window, arguments);
+            return exports;
+          };
+        }
+
+        //  Otherwise just use the return value.
+        else {
+          factory = arguments[argpos];
+        }
+      }
+
+      //  It's an object.
+      else {
+        factory = function() { 
+          return arguments[argpos]; 
+        };
+      }
+
+      //  The arguments and factory are normalzed, we can invoke the factory.
+      generateAll(
+        dependencies, 
+        function() {
+          graph[name].handle = factory.apply(window, arguments);
+          graph[name].loaded = true;
+        },
+        [],
+        { 
+          require:function() { 
+            throw "Cable.js AMD loader does not support CommonJS style require.";
+          },
+          exports:exports,
+          module:null
+        }
+      );
     };
 
     define.amd = {};
