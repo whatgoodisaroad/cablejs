@@ -76,10 +76,11 @@ The examples have dependencies managed in bower:
 * ☑ Builds and runs in strict mode.
 * ☑ Functioning examples.
 * ☑ Functioning cyclic dependency graphs.
+* ☑ Module loader is AMD compliant.
 * ☐ Write tutorial / API docs.
+* ☐ Alias support.
 * ☐ Solidify what helpers depend on libraries (e.g. jQuery).
 * ☐ Streamline event definition syntax.
 * ☐ Implement tools for debugging the dependency graph (via `Cable._debug()`).
-* ☐ Module loader needs to be fully AMD compliant.
 * ☐ Make the dependency graph more plastic (i.e. reconfigurable).
 * ☐ Add history sensitivity decorations.
