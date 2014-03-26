@@ -586,7 +586,7 @@ var evaluators = {
         id,
         dependencies,
         factory,
-        exports,
+        exports = { },
         argpos = 0;
 
       //  If there is a module id.

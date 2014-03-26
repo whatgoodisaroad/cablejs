@@ -1,6 +1,6 @@
 /*.......................................
 . cablejs: By Wyatt Allen, MIT Licenced .
-. 2014-03-26T02:41:08.942Z              .
+. 2014-03-26T20:01:38.366Z              .
 .......................................*/
 "use strict";
 
@@ -585,7 +585,7 @@ var evaluators = {
         id,
         dependencies,
         factory,
-        exports,
+        exports = { },
         argpos = 0;
 
       //  If there is a module id.
