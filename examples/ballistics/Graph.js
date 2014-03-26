@@ -1,8 +1,8 @@
-define(function() {
+define(["d3", "Ballistics"], function(d3, Ballistics) {
   return {
     slices:20,
 
-    setup:function(d3) {
+    setup:function() {
       var
         margin = {
           top: 20, 
@@ -69,7 +69,7 @@ define(function() {
       };
     },
 
-    updateScale:function(d3, plot, region, traj) {
+    updateScale:function(plot, region, traj) {
       var 
         x_ext = d3.extent(traj, function(d) { return d.x; }),
         y_ext = d3.extent(traj, function(d) { return d.h; }),
@@ -95,7 +95,7 @@ define(function() {
       return region;
     },
 
-    updateTrajectory:function(d3, plot, markers) {
+    updateTrajectory:function(plot, markers) {
       var lines = plot.svg.select(".markers").selectAll(".marker")
         .data(markers);
 
@@ -128,7 +128,7 @@ define(function() {
       lines.exit().remove();
     },
 
-    update:function(d3, Ballistics, plot, region, g, theta, v, y_0) {
+    update:function(plot, region, g, theta, v, y_0) {
       var
         traj = Ballistics.trajectory(g, theta, v, y_0, this.slices),
         markers = [];
@@ -143,8 +143,8 @@ define(function() {
         });
       }
 
-      var newRegion = this.updateScale(d3, plot, region, traj);
-      this.updateTrajectory(d3, plot, markers);
+      var newRegion = this.updateScale(plot, region, traj);
+      this.updateTrajectory(plot, markers);
 
       return newRegion
     }

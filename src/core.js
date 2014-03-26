@@ -633,8 +633,8 @@ var evaluators = {
       //  The arguments and factory are normalzed, we can invoke the factory.
       generateAll(
         dependencies, 
-        function() {
-          graph[name].handle = factory.apply(window, arguments);
+        function(values) {
+          graph[name].handle = factory.apply(window, values);
           graph[name].loaded = true;
         },
         [],
@@ -666,7 +666,9 @@ var evaluators = {
         eval(source);
         delete window.define;
 
-        if (name === "$" && $ && $.noConflict) { $.noConflict(); }
+        if (name === "$" && $ && $.noConflict) { 
+          $.noConflict();
+        }
 
         fn();
       }

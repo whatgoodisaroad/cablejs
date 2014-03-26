@@ -93,16 +93,14 @@
         showD:Cable.template("#d", "{{d}} m"),
         showV_f:Cable.template("#v_f", "{{v_f}} m/s"),
 
-        setup:function(d3, Graph, _context, init) {
-          _context(Graph.setup(d3));
+        setup:function(Graph, _context, init) {
+          _context(Graph.setup());
         },
 
         display:function(
-          d3, Ballistics, Graph, 
-          context, g, theta, v, y_0, _region
+          Graph, context, g, theta, v, y_0, _region
         ) {
           var r = Graph.update(
-            d3, Ballistics, 
             context(), _region(), g(), theta(), v(), y_0()
           );
           _region(r);
