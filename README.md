@@ -81,7 +81,8 @@ The examples have dependencies managed in bower:
 * ☑ Functioning examples.
 * ☑ Functioning cyclic dependency graphs.
 * ☑ Module loader is AMD compliant.
-* ☐ Write tutorial / API docs.
+* ☑ Write API docs.
+* ☐ Write tutorial.
 * ☐ Alias support.
 * ☐ Solidify what helpers depend on libraries (e.g. jQuery).
 * ☐ Streamline event definition syntax.
