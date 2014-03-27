@@ -1,6 +1,6 @@
 /*.......................................
 . cablejs: By Wyatt Allen, MIT Licenced .
-. 2014-03-26T20:01:38.366Z              .
+. 2014-03-27T19:16:05.899Z              .
 .......................................*/
 "use strict";
 
@@ -8,7 +8,7 @@ var Cable = {};
 
 (function() {
 
-var reserved = "result respond define type event".split(" ");
+var reserved = "result respond type event".split(" ");
 
 var graph = { };
 
@@ -141,7 +141,7 @@ Cable.define = function(object, options) {
     if (install.hasOwnProperty(type)) {
       install[type](name, cable, options.scope);
     }
-    else if (type !== "sub") {
+    else {
       throw "Illegal definiton: could not determine meaning of " + name;
     }
   });
