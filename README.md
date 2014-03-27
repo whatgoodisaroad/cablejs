@@ -58,6 +58,10 @@ be added to the graph, including different kinds of events, data-sources,
 synthetic-data-sources, effects, libraries and cable-modules. Some of this can 
 be seen in the examples, but a tutorial and API documentation is coming soon.
 
+## API
+
+The API is documented [in the wiki](https://github.com/whatgoodisaroad/cablejs/wiki/API-Documentation).
+
 ## Building
 
 To install dependencies and build cable.js:
