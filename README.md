@@ -55,8 +55,8 @@ the example.
 
 Cable can do much more. There are a number of different kinds of nodes which can
 be added to the graph, including different kinds of events, data-sources, 
-synthetic-data-sources, effects, libraries and cable-modules. Some of this can 
-be seen in the examples, but a tutorial and API documentation is coming soon.
+synthetic-data-sources, effects, libraries and cable-modules. Consult the 
+examples and API document for more. A tutorial is coming soon.
 
 ## API
 
