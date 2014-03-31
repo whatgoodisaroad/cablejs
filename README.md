@@ -84,8 +84,8 @@ The examples have dependencies managed in bower:
 * ☑ Write API docs.
 * ☑ Streamline event definition syntax.
 * ☑ Enable subdefinition syntax for library-dependnat nodes
+* ☑ Alias support.
 * ☐ Write tutorial.
-* ☐ Alias support.
 * ☐ Implement tools for debugging the dependency graph (via `Cable._debug()`).
 * ☐ Make the dependency graph more plastic (i.e. reconfigurable).
 * ☐ Add history sensitivity decorations.
