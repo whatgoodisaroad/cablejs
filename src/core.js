@@ -81,6 +81,11 @@ function isSubDefinition(fn) {
   return getArgNames(fn).indexOf("define") !== -1;
 }
 
+function isEvent(fn) {
+  var args = getArgNames(fn);
+  return args.length === 1 && args[0] === "event";
+}
+
 //  Return the first argument with overriden properties from the second 
 //  argument. For example extend({ x:1, y:2 }, { y:3 }) === { x:1, y:3 } OR
 //  extend({ x:1, y:2 }, { z:1000 }) === { x:1, y:2 }
@@ -138,6 +143,10 @@ Cable.define = function(object, options) {
       }
       else if (isSubDefinition(cable)) {
         type = "subdefinition";
+      }
+      else if (isEvent(cable)) {
+        type = "event";
+        cable = { type:"event", wireup:cable };
       }
       else {
         type = "effect";
@@ -553,7 +562,6 @@ function generate(name, fn) {
     throw "Cannot generate: '" + name + "' is not defined";
   }
 }
-Cable.generate = generate;
 
 function generateAll(names, fn, prefix, overrides) {
   if (prefix === undefined) { prefix = []; }

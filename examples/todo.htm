@@ -79,17 +79,14 @@
           }
         },
 
-        taskClicked:{
-          type:"event",
-          wireup:function(fn) {
-            Cable.generate("$", function($) {
-              $(document).on("click", "ul#list li", function(evt) { 
-                fn($(evt.target).index()); 
-              });
+        taskClicked:function($, define) {
+          define(function(event) {
+            $(document).on("click", "ul#list li", function(e) { 
+              event($(e.target).index()); 
             });
-          }
+          });
         },
-
+        
         finishTask:function(taskClicked, _todoList) { 
           _todoList.updateAt(taskClicked(), { isDone:true });
         }

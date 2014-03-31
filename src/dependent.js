@@ -6,55 +6,45 @@
 //  Lift a textbox into the graph.
 Cable.textbox = function(selector) {
   return Cable.withArgs(["$", "define"], function($, define) {
-    define({
-      type:"event",
-      wireup:function(fn) {
-        var obj = $(selector);
+    define(Cable.withArgs(["event"], function(event) {
+      var obj = $(selector);
 
-        var getter = function() {
-          if (obj.is("[type='number']")) {
-            return parseFloat(obj.val());
-          }
-          else {
-            return obj.val();
-          }
-        };
+      var getter = function() {
+        if (obj.is("[type='number']")) {
+          return parseFloat(obj.val());
+        }
+        else {
+          return obj.val();
+        }
+      };
 
-        obj.on("change keyup", function() {
-          fn(getter());
-        });
-        fn(getter());
-      }
-    });
+      obj.on("change keyup", function() {
+        event(getter());
+      });
+      event(getter());
+    }));
   });
 };
 
 Cable.checkbox = function(selector) {
   return Cable.withArgs(["$", "define"], function($, define) {
     var box = $(selector);
-    define({
-      type:"event",
-      wireup:function(fn) {
-        box.on("change", function() {
-          fn(box.is(":checked"));
-        });
-      }
-    });
+    define(Cable.withArgs(["event"], function(event) {
+      box.on("change", function() {
+        event(box.is(":checked"));
+      });
+      event(box.is(":checked"));
+    }));
   });
 };
 
 Cable.button = function(selector) {
   return Cable.withArgs(["$", "define"], function($, define) {
-    define({
-      type:"event",
-      wireup:function(fn) {
-        Cable.generate("$", function($) {
-          $(selector).on("click", function() {
-            fn(new Date());
-          });
-        })
-      }
-    });
+    define(Cable.withArgs(["event"], function(event) {
+      $(selector).on("click", function() {
+        event(new Date());
+      });
+    }));
   });
 };
 
