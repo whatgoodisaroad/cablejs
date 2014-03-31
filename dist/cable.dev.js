@@ -1,6 +1,6 @@
 /*.......................................
 . cablejs: By Wyatt Allen, MIT Licenced .
-. 2014-03-31T21:56:02.570Z              .
+. 2014-03-31T21:59:47.145Z              .
 .......................................*/
 "use strict";
 
@@ -1080,7 +1080,7 @@ Cable.text = function(url) {
 };
 
 Cable.decorators = function() {
-  return function($, define) {
+  return Cable.withArgs(["$", "define"], function($, define) {
     var def = {};
 
     $("[cable]").each(function(i, e) {
@@ -1093,5 +1093,5 @@ Cable.decorators = function() {
     });
 
     define(def);
-  };
+  });
 };

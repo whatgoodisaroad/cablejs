@@ -128,7 +128,7 @@ Cable.text = function(url) {
 };
 
 Cable.decorators = function() {
-  return function($, define) {
+  return Cable.withArgs(["$", "define"], function($, define) {
     var def = {};
 
     $("[cable]").each(function(i, e) {
@@ -141,5 +141,5 @@ Cable.decorators = function() {
     });
 
     define(def);
-  };
+  });
 };
