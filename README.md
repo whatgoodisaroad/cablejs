@@ -9,19 +9,10 @@ An effect system and FRP runtime for JavaScript
 cable.js is an Functional Reactive Programming (FRP) runtime, an event system,
 and module loader all unified under a common syntax.
 
-One way to think of cable.js is in terms of require.js. Require allows you to 
-write scripts that depend on other scripts. This is generally only used at 
-module-level granularity, but the internals of require.js handle all the 
-dependencies for you. But what if you wanted code that depended on *data*, or 
-an *event*, or a live-updating JSON feed? Cable.js works like a fancy require.js
-that lets you depend on any of these things, and it handles the internals for 
-you.
-
-Another way of thinking about cable.js is in FRP terms. FRP is a style of 
-writing code that depends on live-updating information. Instead of writing code
-that uses *data*, you write code that uses a *stream of data*. You write code
-that builds up a graph of such dependencies, and changes in the data ripples 
-outward towards it's dependents via a graph traversal.
+Every piece of code depends on something, whether it's data, an event being 
+triggered or a library. cable.js is a way of making these dependencies explicit 
+and structuring your code around them. The result is a cleaner code structure 
+that can easily handle constantly changing information and interaction.
 
 ## Example
 
@@ -47,7 +38,7 @@ markdown compiler.
 
 That's it! This is all the code needed to have a live updating preview. It's 
 vanilla JavaScript running in strict mode: no fake pseudo-JS syntax that needs 
-to be pre-processed. No magic markup tags that need to be synchronized.
+to be pre-processed. No magic markup tags.
 
 A working example of this previewer can be found in `examples/markdown.htm` in 
 the repository. Consult the *Building* section of the readme for help running 
