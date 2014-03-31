@@ -158,3 +158,10 @@ Cable.counter = function() {
     }
   });
 };
+
+Cable.alias = function(ref) {
+  return {
+    type:"alias",
+    reference:ref
+  };
+};

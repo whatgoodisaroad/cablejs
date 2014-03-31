@@ -1,6 +1,6 @@
 /*.......................................
 . cablejs: By Wyatt Allen, MIT Licenced .
-. 2014-03-31T19:18:35.506Z              .
+. 2014-03-31T21:56:02.570Z              .
 .......................................*/
 "use strict";
 
@@ -371,6 +371,14 @@ var install = {
       url:obj.url,
       scope:scope
     };
+  },
+
+  alias:function(name, obj, scope) {
+    graph[name] = {
+      type:"alias",
+      reference:obj.reference,
+      scope:scope
+    };
   }
 };
 
@@ -395,7 +403,13 @@ function resolve(name, scope) {
 
   for (var idx = 0; idx < names.length; ++idx) {
     if (graph.hasOwnProperty(names[idx])) {
-      return names[idx];
+      if (graph[names[idx]].type === "alias") {
+        var alias = graph[names[idx]];
+        return resolve(alias.reference, alias.scope);
+      }
+      else {
+        return names[idx];
+      }
     }
   }
   return null;
@@ -932,6 +946,13 @@ Cable.counter = function() {
       return n;
     }
   });
+};
+
+Cable.alias = function(ref) {
+  return {
+    type:"alias",
+    reference:ref
+  };
 };
 
 //  Lift a textbox into the graph.
