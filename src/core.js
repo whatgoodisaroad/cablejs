@@ -1,6 +1,6 @@
 /*..............................................................................
-.  The runtime core. The cable object is declare here and all private code is
-.  declared inside the closure.
+.  The runtime core. The cable object is declare here and all private code is  .
+.  declared inside the closure.                                                .
 ..............................................................................*/
 
 "use strict";
@@ -9,7 +9,7 @@ var Cable = {};
 
 (function() {
 
-var reserved = "result respond type event".split(" ");
+var reserved = "result respond type event define".split(" ");
 
 var graph = { };
 
@@ -77,6 +77,10 @@ function isSynthetic(fn) {
   );
 }
 
+function isSubDefinition(fn) {
+  return getArgNames(fn).indexOf("define") !== -1;
+}
+
 //  Return the first argument with overriden properties from the second 
 //  argument. For example extend({ x:1, y:2 }, { y:3 }) === { x:1, y:3 } OR
 //  extend({ x:1, y:2 }, { z:1000 }) === { x:1, y:2 }
@@ -129,12 +133,20 @@ Cable.define = function(object, options) {
     //  synthetic function (produces synthetic data) or an effect function 
     //  (causes a side effect externally to cable e.g. the DOM).
     else if (isFunction(cable)) {
-      type = isSynthetic(cable) ? "synthetic" : "effect";
+      if (isSynthetic(cable)) {
+        type = "synthetic";
+      }
+      else if (isSubDefinition(cable)) {
+        type = "subdefinition";
+      }
+      else {
+        type = "effect";
+      }
     }
 
-    //  Otherwise, assume it's a subdefinition.
+    //  Otherwise, assume it's a scoped definition.
     else {
-      type = "sub";
+      type = "scope";
     }
 
     //  If a type was determined, and an installer exists for that type, install 
@@ -151,6 +163,10 @@ Cable.define = function(object, options) {
   if (options.reify || options.wireup) {
     loadModules(function() {
       if (options.reify) {
+        reify();
+
+        executeSubdefinitions();
+
         reify();
       }
       if (options.wireup) {
@@ -312,7 +328,7 @@ var install = {
     };
   },
 
-  sub:function(name, obj, scope) {
+  scope:function(name, obj, scope) {
     var newObj = { };
 
     each(obj, function(subobj, subname) {
@@ -325,10 +341,20 @@ var install = {
         reify:false, 
         wireup:false,
         scope:{
-          chain:scope.chain.concat([ name ])
+          chain:scope.chain.concat([ name.replace(/^.+_/, "") ])
         }
       }
     );
+  },
+
+  subdefinition:function(name, fn, scope) {
+    graph[name] = {
+      type:"subdefinition",
+      in:getFanIn(fn),
+      fn:fn,
+      scope:scope,
+      defineIndex:getArgNames(fn).indexOf("define")
+    };
   },
 
   module:function(name, obj, scope) {
@@ -358,6 +384,7 @@ function enumerateScopes(chain, name) {
 //  Resolve the reference, If there is no apparent resolution, return null.
 function resolve(name, scope) {
   var names = enumerateScopes(scope.chain, name);
+
   for (var idx = 0; idx < names.length; ++idx) {
     if (graph.hasOwnProperty(names[idx])) {
       return names[idx];
@@ -407,6 +434,32 @@ function reify() {
       });
     }
 
+  });
+}
+
+function executeSubdefinitions() {
+  each(graph, function(node, nodeName) {
+    if (node.type === "subdefinition") {
+      if (allDependenciesAreLibraries(nodeName)) {
+        generateIn(nodeName, function(deps) {
+          deps.splice(node.defineIndex, 0, function(obj) {
+            var def = {};
+            def[nodeName] = obj;
+            Cable.define(def, { scope:node.scope });
+          });
+
+          delete graph[nodeName];
+          
+          node.fn.apply(window, deps);
+        });
+      }
+
+      else {
+        throw "Illegal subdefinition: " + 
+          nodeName + 
+          ". Subdefs must depend only on libraries";
+      }
+    }
   });
 }
 
@@ -695,6 +748,14 @@ function allDependenciesEvaluated(name) {
   }
 
   return true;
+}
+
+function allDependenciesAreLibraries(name) {
+  return graph[name]["in"]
+    .map(function(dep) {
+      return graph[resolve(dep, graph[name].scope)].type === "library";
+    })
+    .reduce(function(a, b) { return a && b; });
 }
 
 function triggerDownstream(name) {

@@ -1,0 +1,31 @@
+<html>
+  <head>
+    <title>Cable</title>
+    <style>
+      html, body { 
+        font-size: 20pt;
+        font-family: sans-serif;
+      }
+      #main { 
+        width: 400px; 
+        margin: 20px auto;
+        padding: 20px;
+        border:1px solid #ccc;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="main">
+      <input id="username" cable value="John" />
+      <div id="output" cable>The username is {{username}}.</div>
+    </div>
+
+    <script src="../dist/cable.dev.js"></script>
+    <script>
+      Cable.define({
+        $:Cable.library("bower_components/jquery/dist/jquery.min.js"),
+        dec:Cable.decorators()
+      });
+    </script>
+  </body>
+</html>

@@ -1,83 +1,14 @@
 /*..............................................................................
-.  Dependent helpers. A set of tools for constructing the graph which depend on
-.  at least one library. For example, jQuery for event bindings and DOM manip.
+.  Dependent helpers. A set of tools for constructing the graph which depend   .
+.  on. at least one library (e.g. jQuery).                                     .
 ..............................................................................*/
-
-//  Super-generic event function.
-// 
-//  NOTE: This is getting to big. Probably gonna break this down into 
-//  specialized helpers like textbox and checkbox.
-Cable.event = function(selector, events, property, triggerOnLoad) {
-  return { 
-    type:"event",
-    coalesce:false,
-    wireup:function(fn) {
-      Cable.generate("$", function($) {
-        if (selector === "document" && events === "ready") {
-          $(document).ready(fn);
-        }
-        else {
-          var 
-            getter = function() {
-              var 
-                val = null,
-                obj = $(selector);
-
-              if (!property) {
-                property = "time";
-              }
-
-              if (property === "value") {
-                val = obj.val();
-
-                if (obj.is("[type='number']")) {
-                  val = parseFloat(val);
-                }
-              }
-              else if (property === "time") {
-                val = new Date();
-              }
-              else if (/^data-[-_a-zA-Z0-9]+/.test(property)) {
-                val = obj.attr(property);
-              }
-              else if (property === ":checked") {
-                val = obj.is(":checked");
-              }
-
-              fn(val);
-            },
-
-            handler;
-
-          if (events === "key-return") {
-            events = "keyup";
-            handler = function(evt) {
-              if (evt.keyCode === 13) {
-                getter();
-              }
-            };
-          }
-          else {
-            handler = getter;
-          }
-
-          $(document).on(events, selector, handler);
-
-          if (triggerOnLoad) {
-            getter();
-          }
-        }
-      });
-    }
-  };
-};
 
 //  Lift a textbox into the graph.
 Cable.textbox = function(selector) {
-  return {
-    type:"event",
-    wireup:function(fn) {
-      Cable.generate("$", function($) {
+  return Cable.withArgs(["$", "define"], function($, define) {
+    define({
+      type:"event",
+      wireup:function(fn) {
         var obj = $(selector);
 
         var getter = function() {
@@ -93,41 +24,53 @@ Cable.textbox = function(selector) {
           fn(getter());
         });
         fn(getter());
-      })
-    }
-  };
+      }
+    });
+  });
 };
 
 Cable.checkbox = function(selector) {
-  return Cable.event(selector, "change", ":checked", true);
+  return Cable.withArgs(["$", "define"], function($, define) {
+    var box = $(selector);
+    define({
+      type:"event",
+      wireup:function(fn) {
+        box.on("change", function() {
+          fn(box.is(":checked"));
+        });
+      }
+    });
+  });
 };
 
 Cable.button = function(selector) {
-  return {
-    type:"event",
-    wireup:function(fn) {
-      Cable.generate("$", function($) {
-        $(selector).on("click", function() {
-          fn(new Date());
-        });
-      })
-    }
-  };
+  return Cable.withArgs(["$", "define"], function($, define) {
+    define({
+      type:"event",
+      wireup:function(fn) {
+        Cable.generate("$", function($) {
+          $(selector).on("click", function() {
+            fn(new Date());
+          });
+        })
+      }
+    });
+  });
 };
 
 Cable.returnKey = function(selector) {
-  return {
-    type:"event",
-    wireup:function(fn) {
-      Cable.generate("$", function($) {
+  return Cable.withArgs(["$", "define"], function($, define) {
+    define({
+      type:"event",
+      wireup:function(fn) {
         $(selector).on("keyup", function(evt) {
           if (evt.keyCode === 13) {
             fn(new Date());
           }
         });
-      });
-    }
-  };
+      }
+    });
+  });
 };
 
 Cable.template = function(selector, template) {
@@ -192,4 +135,21 @@ Cable.text = function(url) {
       }
     });
   });
+};
+
+Cable.decorators = function() {
+  return function($, define) {
+    var def = {};
+
+    $("[cable]").each(function(i, e) {
+      if ($(e).is(":text")) {
+        def[e.id] = Cable.textbox("#" + e.id);
+      }
+      else {
+        def[e.id] = Cable.template("#" + e.id, e.innerText);
+      }
+    });
+
+    define(def);
+  };
 };

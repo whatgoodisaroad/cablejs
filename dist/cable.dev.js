@@ -1,6 +1,6 @@
 /*.......................................
 . cablejs: By Wyatt Allen, MIT Licenced .
-. 2014-03-27T19:16:05.899Z              .
+. 2014-03-31T18:53:34.199Z              .
 .......................................*/
 "use strict";
 
@@ -8,7 +8,7 @@ var Cable = {};
 
 (function() {
 
-var reserved = "result respond type event".split(" ");
+var reserved = "result respond type event define".split(" ");
 
 var graph = { };
 
@@ -76,6 +76,10 @@ function isSynthetic(fn) {
   );
 }
 
+function isSubDefinition(fn) {
+  return getArgNames(fn).indexOf("define") !== -1;
+}
+
 //  Return the first argument with overriden properties from the second 
 //  argument. For example extend({ x:1, y:2 }, { y:3 }) === { x:1, y:3 } OR
 //  extend({ x:1, y:2 }, { z:1000 }) === { x:1, y:2 }
@@ -128,12 +132,20 @@ Cable.define = function(object, options) {
     //  synthetic function (produces synthetic data) or an effect function 
     //  (causes a side effect externally to cable e.g. the DOM).
     else if (isFunction(cable)) {
-      type = isSynthetic(cable) ? "synthetic" : "effect";
+      if (isSynthetic(cable)) {
+        type = "synthetic";
+      }
+      else if (isSubDefinition(cable)) {
+        type = "subdefinition";
+      }
+      else {
+        type = "effect";
+      }
     }
 
-    //  Otherwise, assume it's a subdefinition.
+    //  Otherwise, assume it's a scoped definition.
     else {
-      type = "sub";
+      type = "scope";
     }
 
     //  If a type was determined, and an installer exists for that type, install 
@@ -150,6 +162,10 @@ Cable.define = function(object, options) {
   if (options.reify || options.wireup) {
     loadModules(function() {
       if (options.reify) {
+        reify();
+
+        executeSubdefinitions();
+
         reify();
       }
       if (options.wireup) {
@@ -311,7 +327,7 @@ var install = {
     };
   },
 
-  sub:function(name, obj, scope) {
+  scope:function(name, obj, scope) {
     var newObj = { };
 
     each(obj, function(subobj, subname) {
@@ -324,10 +340,20 @@ var install = {
         reify:false, 
         wireup:false,
         scope:{
-          chain:scope.chain.concat([ name ])
+          chain:scope.chain.concat([ name.replace(/^.+_/, "") ])
         }
       }
     );
+  },
+
+  subdefinition:function(name, fn, scope) {
+    graph[name] = {
+      type:"subdefinition",
+      in:getFanIn(fn),
+      fn:fn,
+      scope:scope,
+      defineIndex:getArgNames(fn).indexOf("define")
+    };
   },
 
   module:function(name, obj, scope) {
@@ -357,6 +383,7 @@ function enumerateScopes(chain, name) {
 //  Resolve the reference, If there is no apparent resolution, return null.
 function resolve(name, scope) {
   var names = enumerateScopes(scope.chain, name);
+
   for (var idx = 0; idx < names.length; ++idx) {
     if (graph.hasOwnProperty(names[idx])) {
       return names[idx];
@@ -406,6 +433,32 @@ function reify() {
       });
     }
 
+  });
+}
+
+function executeSubdefinitions() {
+  each(graph, function(node, nodeName) {
+    if (node.type === "subdefinition") {
+      if (allDependenciesAreLibraries(nodeName)) {
+        generateIn(nodeName, function(deps) {
+          deps.splice(node.defineIndex, 0, function(obj) {
+            var def = {};
+            def[nodeName] = obj;
+            Cable.define(def, { scope:node.scope });
+          });
+
+          delete graph[nodeName];
+          
+          node.fn.apply(window, deps);
+        });
+      }
+
+      else {
+        throw "Illegal subdefinition: " + 
+          nodeName + 
+          ". Subdefs must depend only on libraries";
+      }
+    }
   });
 }
 
@@ -696,6 +749,14 @@ function allDependenciesEvaluated(name) {
   return true;
 }
 
+function allDependenciesAreLibraries(name) {
+  return graph[name]["in"]
+    .map(function(dep) {
+      return graph[resolve(dep, graph[name].scope)].type === "library";
+    })
+    .reduce(function(a, b) { return a && b; });
+}
+
 function triggerDownstream(name) {
   graph[name].out.forEach(trigger);
 }
@@ -865,81 +926,12 @@ Cable.counter = function() {
   });
 };
 
-//  Super-generic event function.
-// 
-//  NOTE: This is getting to big. Probably gonna break this down into 
-//  specialized helpers like textbox and checkbox.
-Cable.event = function(selector, events, property, triggerOnLoad) {
-  return { 
-    type:"event",
-    coalesce:false,
-    wireup:function(fn) {
-      Cable.generate("$", function($) {
-        if (selector === "document" && events === "ready") {
-          $(document).ready(fn);
-        }
-        else {
-          var 
-            getter = function() {
-              var 
-                val = null,
-                obj = $(selector);
-
-              if (!property) {
-                property = "time";
-              }
-
-              if (property === "value") {
-                val = obj.val();
-
-                if (obj.is("[type='number']")) {
-                  val = parseFloat(val);
-                }
-              }
-              else if (property === "time") {
-                val = new Date();
-              }
-              else if (/^data-[-_a-zA-Z0-9]+/.test(property)) {
-                val = obj.attr(property);
-              }
-              else if (property === ":checked") {
-                val = obj.is(":checked");
-              }
-
-              fn(val);
-            },
-
-            handler;
-
-          if (events === "key-return") {
-            events = "keyup";
-            handler = function(evt) {
-              if (evt.keyCode === 13) {
-                getter();
-              }
-            };
-          }
-          else {
-            handler = getter;
-          }
-
-          $(document).on(events, selector, handler);
-
-          if (triggerOnLoad) {
-            getter();
-          }
-        }
-      });
-    }
-  };
-};
-
 //  Lift a textbox into the graph.
 Cable.textbox = function(selector) {
-  return {
-    type:"event",
-    wireup:function(fn) {
-      Cable.generate("$", function($) {
+  return Cable.withArgs(["$", "define"], function($, define) {
+    define({
+      type:"event",
+      wireup:function(fn) {
         var obj = $(selector);
 
         var getter = function() {
@@ -955,41 +947,53 @@ Cable.textbox = function(selector) {
           fn(getter());
         });
         fn(getter());
-      })
-    }
-  };
+      }
+    });
+  });
 };
 
 Cable.checkbox = function(selector) {
-  return Cable.event(selector, "change", ":checked", true);
+  return Cable.withArgs(["$", "define"], function($, define) {
+    var box = $(selector);
+    define({
+      type:"event",
+      wireup:function(fn) {
+        box.on("change", function() {
+          fn(box.is(":checked"));
+        });
+      }
+    });
+  });
 };
 
 Cable.button = function(selector) {
-  return {
-    type:"event",
-    wireup:function(fn) {
-      Cable.generate("$", function($) {
-        $(selector).on("click", function() {
-          fn(new Date());
-        });
-      })
-    }
-  };
+  return Cable.withArgs(["$", "define"], function($, define) {
+    define({
+      type:"event",
+      wireup:function(fn) {
+        Cable.generate("$", function($) {
+          $(selector).on("click", function() {
+            fn(new Date());
+          });
+        })
+      }
+    });
+  });
 };
 
 Cable.returnKey = function(selector) {
-  return {
-    type:"event",
-    wireup:function(fn) {
-      Cable.generate("$", function($) {
+  return Cable.withArgs(["$", "define"], function($, define) {
+    define({
+      type:"event",
+      wireup:function(fn) {
         $(selector).on("keyup", function(evt) {
           if (evt.keyCode === 13) {
             fn(new Date());
           }
         });
-      });
-    }
-  };
+      }
+    });
+  });
 };
 
 Cable.template = function(selector, template) {
@@ -1054,4 +1058,21 @@ Cable.text = function(url) {
       }
     });
   });
+};
+
+Cable.decorators = function() {
+  return function($, define) {
+    var def = {};
+
+    $("[cable]").each(function(i, e) {
+      if ($(e).is(":text")) {
+        def[e.id] = Cable.textbox("#" + e.id);
+      }
+      else {
+        def[e.id] = Cable.template("#" + e.id, e.innerText);
+      }
+    });
+
+    define(def);
+  };
 };
