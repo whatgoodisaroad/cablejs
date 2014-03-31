@@ -1,6 +1,6 @@
 /*.......................................
 . cablejs: By Wyatt Allen, MIT Licenced .
-. 2014-03-31T21:59:47.145Z              .
+. 2014-03-31T22:10:14.059Z              .
 .......................................*/
 "use strict";
 
@@ -814,7 +814,7 @@ Cable.data = function(value, helpers) {
 //  Can be used as a dependency for functions which should be run when the page 
 //  loads.
 Cable.define(
-  { init:{ type:"event", wireup:function(f) { f(new Date()); } } }, 
+  { init:Cable.withArgs(["event"], function(event) { event(new Date()); }) }, 
   { reify:false, wireup:false }
 );
 

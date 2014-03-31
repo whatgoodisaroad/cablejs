@@ -25,7 +25,7 @@ Cable.data = function(value, helpers) {
 //  Can be used as a dependency for functions which should be run when the page 
 //  loads.
 Cable.define(
-  { init:{ type:"event", wireup:function(f) { f(new Date()); } } }, 
+  { init:Cable.withArgs(["event"], function(event) { event(new Date()); }) }, 
   { reify:false, wireup:false }
 );
 
