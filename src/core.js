@@ -490,11 +490,17 @@ function executeSubdefinitions() {
 function wireup() {
   each(graph, function(node, nodeName) {
     if (node.type === "event" && !node.isWiredUp) {
-      node.wireup(function(value) {
+      var eventFn = function(value) {
         generate(nodeName, function(setter) {
           setter(value);
         });
-      });
+      };
+
+      eventFn.setDefault = function(value) {
+        node.value = value;
+      };
+
+      node.wireup(eventFn);
       node.isWiredUp = true;
     }
   });

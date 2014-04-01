@@ -48,30 +48,29 @@
 
         chart:Cable.data(null),
 
-        mousePosition:{
-          type:"event",
-          defaultValue:{ x:0, y:0 },
-          wireup:function(event) {
-            document.onmousemove = function(e) {
-              event({ x:e.clientX, y:e.clientY }); 
-            };
-          }
+        mousePosition:function(event) {
+          event.setDefault({
+            x:0.5 * document.body.clientWidth,
+            y:0.5 * document.body.clientHeight
+          });
+
+          document.onmousemove = function(e) {
+            event({ x:e.clientX, y:e.clientY });
+          };
         },
 
-        windowResize:{
-          type:"event",
-          defaultValue:{
+        windowResize:function(event) {
+          event.setDefault({
             h:document.body.clientWidth,
             v:document.body.clientHeight
-          },
-          wireup:function(event) {
-            window.onresize = function() {
-              event({
-                h:document.body.clientWidth,
-                v:document.body.clientHeight
-              });
-            };
-          }
+          });
+
+          window.onresize = function() {
+            event({
+              h:document.body.clientWidth,
+              v:document.body.clientHeight
+            });
+          };
         },
 
         chartData:function(mousePosition, windowResize, result) {

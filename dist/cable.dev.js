@@ -1,6 +1,6 @@
 /*.......................................
 . cablejs: By Wyatt Allen, MIT Licenced .
-. 2014-03-31T22:10:14.059Z              .
+. 2014-04-01T19:37:06.584Z              .
 .......................................*/
 "use strict";
 
@@ -489,11 +489,18 @@ function executeSubdefinitions() {
 function wireup() {
   each(graph, function(node, nodeName) {
     if (node.type === "event" && !node.isWiredUp) {
-      node.wireup(function(value) {
+      var eventFn = function(value) {
         generate(nodeName, function(setter) {
           setter(value);
         });
-      });
+      };
+
+      eventFn.setDefault = function(value) {
+        console.log("setting default", value);
+        node.value = value;
+      };
+
+      node.wireup(eventFn);
       node.isWiredUp = true;
     }
   });
