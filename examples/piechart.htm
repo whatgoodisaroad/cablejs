@@ -59,7 +59,7 @@
           };
         },
 
-        windowResize:function(event) {
+        windowSize:function(event) {
           event.setDefault({
             h:document.body.clientWidth,
             v:document.body.clientHeight
@@ -73,12 +73,18 @@
           };
         },
 
-        chartData:function(mousePosition, windowResize, result) {
+        chartData:function(mousePosition, windowSize, result) {
+          var
+            x = mousePosition().x,
+            y = mousePosition().y,
+            h = windowSize().h,
+            v = windowSize().v;
+
           result([
-            mousePosition().x / windowResize().h,
-            mousePosition().y / windowResize().v,
-            1 - (mousePosition().y / windowResize().v),
-            1 - (mousePosition().x / windowResize().h)
+            x / h,
+            y / v,
+            1 - (y / v),
+            1 - (x / h)
           ]);
         },
 
