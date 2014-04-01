@@ -1,6 +1,6 @@
 /*.......................................
 . cablejs: By Wyatt Allen, MIT Licenced .
-. 2014-04-01T19:37:06.584Z              .
+. 2014-04-01T19:41:39.707Z              .
 .......................................*/
 "use strict";
 
@@ -496,7 +496,6 @@ function wireup() {
       };
 
       eventFn.setDefault = function(value) {
-        console.log("setting default", value);
         node.value = value;
       };
 
