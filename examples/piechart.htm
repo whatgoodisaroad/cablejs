@@ -1,0 +1,100 @@
+<html>
+  <head>
+    <title>Cable</title>
+    <style>
+    </style>
+  </head>
+  <body>
+    <div id="main">
+    </div>
+    <script src="../dist/cable.min.js"></script>
+    <script>
+      function initPie(d3) {
+        var 
+          innerRadius = 200,
+          outerRadius = 120,
+          width = 800,
+          height = 500,
+          color = d3.scale.category20(),
+          data = [ 1, 1, 1, 1 ];
+
+        var pie = d3.layout.pie()
+         .sort(null);
+
+        var arc = d3.svg.arc()
+          .innerRadius(innerRadius)
+          .outerRadius(outerRadius);
+
+        var svg = d3.select("body").append("svg")
+         .attr("width", width)
+         .attr("height", height)
+         .append("g")
+         .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+        var path = svg.selectAll("svg")
+          .data(pie(data))
+          .enter().append("path")
+          .attr("fill", "white")
+          .attr("d", arc);
+
+        return { svg:svg, arc:arc, pie:pie, path:path, color:color };
+      }
+
+      function updatePie(d3, data, chart) {
+        chart.path
+          .data(chart.pie(data))
+          .attr("fill", function(d, i) { return chart.color(i); })
+          .attr("d", chart.arc);
+      }
+
+      Cable.define({
+        d3:Cable.library("bower_components/d3/d3.min.js"),
+
+        chart:Cable.data(null),
+
+        mousePosition:{
+          type:"event",
+          defaultValue:{ x:0, y:0 },
+          wireup:function(event) {
+            document.onmousemove = function(e) {
+              event({ x:e.clientX, y:e.clientY }); 
+            };
+          }
+        },
+
+        windowResize:{
+          type:"event",
+          defaultValue:{
+            h:document.body.clientWidth,
+            v:document.body.clientHeight
+          },
+          wireup:function(event) {
+            window.onresize = function() {
+              event({
+                h:document.body.clientWidth,
+                v:document.body.clientHeight
+              });
+            };
+          }
+        },
+
+        chartData:function(mousePosition, windowResize, result) {
+          result([
+            mousePosition().x / windowResize().h,
+            mousePosition().y / windowResize().v,
+            1 - (mousePosition().y / windowResize().v),
+            1 - (mousePosition().x / windowResize().h)
+          ]);
+        },
+
+        setup:function(d3, init, _chart) {
+          _chart(initPie(d3));
+        },
+
+        update:function(d3, chart, chartData) {
+          updatePie(d3, chartData(), chart());
+        }
+      });
+    </script>
+  </body>
+</html>
