@@ -55,12 +55,18 @@ The API is documented [in the wiki](https://github.com/whatgoodisaroad/cablejs/w
 
 ## Building
 
-To install dependencies and build cable.js:
+To download and build, you'll need npm and git.
+
+    # download:
+
+    git clone git@github.com:whatgoodisaroad/cablejs.git
+
+    # install dependencies and build:
 
     npm install
     grunt build
 
-The examples have dependencies managed in bower:
+    # download example dependencies:
 
     cd examples
     bower install
