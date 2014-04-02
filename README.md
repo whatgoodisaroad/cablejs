@@ -60,6 +60,7 @@ To download and build, you'll need npm and git.
     # download:
 
     git clone git@github.com:whatgoodisaroad/cablejs.git
+    cd cablejs
 
     # install dependencies and build:
 
