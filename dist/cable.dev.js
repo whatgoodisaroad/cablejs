@@ -1,10 +1,15 @@
 /*.......................................
 . cablejs: By Wyatt Allen, MIT Licenced .
-. 2014-04-01T19:41:39.707Z              .
+. 2014-04-08T18:42:49.428Z              .
 .......................................*/
 "use strict";
 
 var Cable = {};
+
+if (typeof module === "object" && typeof module.exports === "object") {
+  Cable._private = {};
+  module.exports = Cable;  
+}
 
 (function() {
 
@@ -743,7 +748,12 @@ var evaluators = {
         }
 
         window.define = define;
-        eval(source);
+        try {
+          eval(source);
+        }
+        catch(exc) {
+          throw "Failed evaluating library " + name + ": " + exc;
+        }
         delete window.define;
 
         if (name === "$" && $ && $.noConflict) { 
@@ -795,6 +805,12 @@ Cable.initialize = function(name, value) {
     graph[name].invoked = true;
   }
 };
+
+if (Cable._private) {
+  Cable._private = {
+    getArgNames:getArgNames
+  };
+}
 
 })();
 

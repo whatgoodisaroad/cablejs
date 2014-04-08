@@ -7,6 +7,11 @@
 
 var Cable = {};
 
+if (typeof module === "object" && typeof module.exports === "object") {
+  Cable._private = {};
+  module.exports = Cable;
+}
+
 (function() {
 
 var reserved = "result respond type event define".split(" ");
@@ -744,7 +749,12 @@ var evaluators = {
         }
 
         window.define = define;
-        eval(source);
+        try {
+          eval(source);
+        }
+        catch(exc) {
+          throw "Failed evaluating library " + name + ": " + exc;
+        }
         delete window.define;
 
         if (name === "$" && $ && $.noConflict) { 
@@ -796,5 +806,11 @@ Cable.initialize = function(name, value) {
     graph[name].invoked = true;
   }
 };
+
+if (Cable._private) {
+  Cable._private = {
+    getArgNames:getArgNames
+  };
+}
 
 })();
