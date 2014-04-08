@@ -1,6 +1,6 @@
 /*.......................................
 . cablejs: By Wyatt Allen, MIT Licenced .
-. 2014-04-08T18:42:49.428Z              .
+. 2014-04-08T21:28:44.505Z              .
 .......................................*/
 "use strict";
 
@@ -8,7 +8,7 @@ var Cable = {};
 
 if (typeof module === "object" && typeof module.exports === "object") {
   Cable._private = {};
-  module.exports = Cable;  
+  module.exports = Cable;
 }
 
 (function() {
@@ -342,6 +342,7 @@ var install = {
   },
 
   scope:function(name, obj, scope) {
+
     var newObj = { };
 
     each(obj, function(subobj, subname) {
@@ -349,12 +350,16 @@ var install = {
       newObj[newName] = subobj;
     });
 
+    var namespace = scope.chain.map(function(n) { return n + "_"; }).join("_");
+
+    var newChain = scope.chain.concat([ name.slice(namespace.length) ]);
+
     Cable.define(
       newObj, { 
         reify:false, 
         wireup:false,
         scope:{
-          chain:scope.chain.concat([ name.replace(/^.+_/, "") ])
+          chain:newChain
         }
       }
     );
@@ -721,6 +726,7 @@ var evaluators = {
         function(values) {
           graph[name].handle = factory.apply(window, values);
           graph[name].loaded = true;
+          fn();
         },
         [],
         { 
@@ -759,8 +765,6 @@ var evaluators = {
         if (name === "$" && $ && $.noConflict) { 
           $.noConflict();
         }
-
-        fn();
       }
     }
 

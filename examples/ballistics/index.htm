@@ -100,10 +100,12 @@
         display:function(
           Graph, context, g, theta, v, y_0, _region
         ) {
-          var r = Graph.update(
-            context(), _region(), g(), theta(), v(), y_0()
-          );
-          _region(r);
+          if (context()) {
+            var r = Graph.update(
+              context(), _region(), g(), theta(), v(), y_0()
+            );
+            _region(r);
+          }
         }
       });
     </script>

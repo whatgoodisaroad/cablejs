@@ -343,6 +343,7 @@ var install = {
   },
 
   scope:function(name, obj, scope) {
+
     var newObj = { };
 
     each(obj, function(subobj, subname) {
@@ -350,12 +351,16 @@ var install = {
       newObj[newName] = subobj;
     });
 
+    var
+      namespace = scope.chain.map(function(n) { return n + "_"; }).join("_"),
+      newChain = scope.chain.concat([ name.slice(namespace.length) ]);
+
     Cable.define(
       newObj, { 
         reify:false, 
         wireup:false,
         scope:{
-          chain:scope.chain.concat([ name.replace(/^.+_/, "") ])
+          chain:newChain
         }
       }
     );
@@ -722,6 +727,7 @@ var evaluators = {
         function(values) {
           graph[name].handle = factory.apply(window, values);
           graph[name].loaded = true;
+          fn();
         },
         [],
         { 
@@ -760,8 +766,6 @@ var evaluators = {
         if (name === "$" && $ && $.noConflict) { 
           $.noConflict();
         }
-
-        fn();
       }
     }
 
