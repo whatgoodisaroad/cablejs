@@ -397,9 +397,7 @@ var install = {
 };
 
 //  Take a scope chain and a name, and enumerate each possible namespace 
-//  prefixed version of that name starting with the deepest. For example 
-//  enumerateScopes(['x','y','z'], "w") === ["x_y_z_w", "x_y_w", "x_w"] OR
-//  enumerateScopes(['x','y'], "main") === ["x_y", "x"]
+//  prefixed version of that name starting with the deepest.
 function enumerateScopes(chain, name) {
   var 
     suffix = name === "main" ? "" : "_" + name,
@@ -407,7 +405,9 @@ function enumerateScopes(chain, name) {
   for (var idx = 0; idx < chain.length; ++idx) {
     scopes.push(chain.slice(0, chain.length - idx).join("_") + suffix);
   }
-  scopes.push(name);
+  if (name !== "main") {
+    scopes.push(name);
+  }
   return scopes;
 }
 
@@ -818,7 +818,12 @@ if (Cable._private) {
   Cable._private = {
     getArgNames:getArgNames,
     getFanIn:getFanIn,
-    getDependencies:getDependencies
+    getDependencies:getDependencies,
+    isSynthetic:isSynthetic,
+    isSubDefinition:isSubDefinition,
+    isEvent:isEvent,
+    extend:extend,
+    enumerateScopes:enumerateScopes
   };
 }
 
