@@ -36,10 +36,13 @@ function getArgNames(fn) {
     return fn.argAliases;
   }
   else {
-    return (fn + "")
-      .match(/^function(\s*)?\(([^)]*)\)/m)[2]
-      .split(",")
-      .map(function(x) { return x.replace(/(^\s+)|(\s+$)/g, ""); });
+    var match = (fn + "").match(/^function(\s*)?\(([^)]*)\)/m)[2];
+
+    return match.length ?
+      match
+        .split(",")
+        .map(function(x) { return x.replace(/(^\s+)|(\s+$)/g, ""); }) :
+      [];
   }
 }
 

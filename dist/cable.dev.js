@@ -1,6 +1,6 @@
 /*.......................................
 . cablejs: By Wyatt Allen, MIT Licenced .
-. 2014-04-08T21:28:44.505Z              .
+. 2014-04-08T21:37:30.024Z              .
 .......................................*/
 "use strict";
 
@@ -35,10 +35,13 @@ function getArgNames(fn) {
     return fn.argAliases;
   }
   else {
-    return (fn + "")
-      .match(/^function(\s*)?\(([^)]*)\)/m)[2]
-      .split(",")
-      .map(function(x) { return x.replace(/(^\s+)|(\s+$)/g, ""); });
+    var match = (fn + "").match(/^function(\s*)?\(([^)]*)\)/m)[2];
+
+    return match.length ?
+      match
+        .split(",")
+        .map(function(x) { return x.replace(/(^\s+)|(\s+$)/g, ""); }) :
+      [];
   }
 }
 
@@ -350,9 +353,9 @@ var install = {
       newObj[newName] = subobj;
     });
 
-    var namespace = scope.chain.map(function(n) { return n + "_"; }).join("_");
-
-    var newChain = scope.chain.concat([ name.slice(namespace.length) ]);
+    var
+      namespace = scope.chain.map(function(n) { return n + "_"; }).join("_"),
+      newChain = scope.chain.concat([ name.slice(namespace.length) ]);
 
     Cable.define(
       newObj, { 
