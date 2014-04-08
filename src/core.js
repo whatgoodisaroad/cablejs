@@ -816,7 +816,9 @@ Cable.initialize = function(name, value) {
 
 if (Cable._private) {
   Cable._private = {
-    getArgNames:getArgNames
+    getArgNames:getArgNames,
+    getFanIn:getFanIn,
+    getDependencies:getDependencies
   };
 }
 

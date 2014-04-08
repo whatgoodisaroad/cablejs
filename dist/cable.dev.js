@@ -1,6 +1,6 @@
 /*.......................................
 . cablejs: By Wyatt Allen, MIT Licenced .
-. 2014-04-08T21:37:30.024Z              .
+. 2014-04-08T21:57:00.906Z              .
 .......................................*/
 "use strict";
 
@@ -815,7 +815,9 @@ Cable.initialize = function(name, value) {
 
 if (Cable._private) {
   Cable._private = {
-    getArgNames:getArgNames
+    getArgNames:getArgNames,
+    getFanIn:getFanIn,
+    getDependencies:getDependencies
   };
 }
 

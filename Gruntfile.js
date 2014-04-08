@@ -14,6 +14,7 @@ module.exports = function(grunt) {
   
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-closurecompiler');
+  grunt.loadNpmTasks('grunt-mocha-test');
 
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
@@ -50,10 +51,20 @@ module.exports = function(grunt) {
           "banner":generateBanner(),
         }
       }
+    },
+
+    mochaTest: {
+      test: {
+        options: {
+          reporter: 'spec'
+        },
+        src: ['test/**/*.js']
+      }
     }
   });
 
   grunt.registerTask('build', ["concat:dist", 'closurecompiler:minify']); 
+  grunt.registerTask('test', ["mochaTest"]); 
 
-  grunt.registerTask('default', ['build']); 
+  grunt.registerTask('default', ['build', "test"]); 
 };
