@@ -83,6 +83,8 @@ To download and build, you'll need npm and git.
 * ☑ Streamline event definition syntax.
 * ☑ Enable subdefinition syntax for library-dependnat nodes
 * ☑ Alias support.
+* ☑ Write unit tests.
+* ☐ Write *more* unit tests.
 * ☐ Write tutorial.
 * ☐ Implement tools for debugging the dependency graph (via `Cable._debug()`).
 * ☐ Make the dependency graph more plastic (i.e. reconfigurable).
