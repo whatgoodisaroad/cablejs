@@ -1,0 +1,36 @@
+#main {
+  width: 400px;
+  margin:50px auto;
+  position: relative;
+}
+
+table {
+  table-layout: fixed;
+  width:400px;
+  height:400px;
+}
+
+.cell {
+  border: 1px dotted black;
+  font-size: 30pt;
+  padding:10px;
+  text-align: center;
+  width:100px;
+  height:100px;
+  font-weight: bold;
+}
+
+.cell[data-value="0"]    span:before { content: ""; color:red; }
+.cell[data-value="2"]    span:before { content: "2"; color:blue; }
+.cell[data-value="4"]    span:before { content: "4"; color:green; }
+.cell[data-value="8"]    span:before { content: "8"; color:purple; }
+.cell[data-value="16"]   span:before { content: "16"; color:pink; }
+.cell[data-value="32"]   span:before { content: "32"; color:brown; }
+.cell[data-value="64"]   span:before { content: "64"; color:orange; }
+.cell[data-value="128"]  span:before { content: "128"; color:teal; }
+.cell[data-value="256"]  span:before { content: "256"; color:lime; }
+.cell[data-value="512"]  span:before { content: "512"; color:violet; }
+.cell[data-value="1024"] span:before { content: "1024"; color:gray; }
+.cell[data-value="2048"] span:before { content: "2048"; color:white; }
+
+.cell.moving-cell { position: absolute; border: none; }
