@@ -2,35 +2,47 @@
   width: 400px;
   margin:50px auto;
   position: relative;
+
 }
 
 table {
+  background-color: #eee;
   table-layout: fixed;
   width:400px;
   height:400px;
 }
 
 .cell {
-  border: 1px dotted black;
-  font-size: 30pt;
-  padding:10px;
+  border: 2px solid #777;
+  font-size:30pt;
+  padding:10px 0;
+  margin:4px;
   text-align: center;
-  width:100px;
-  height:100px;
+  width:92px;
+  height:92px;
   font-weight: bold;
+
+  border-radius: 8px;
+
+  background-color: #fff;
 }
 
-.cell[data-value="0"]    span:before { content: ""; color:red; }
-.cell[data-value="2"]    span:before { content: "2"; color:blue; }
-.cell[data-value="4"]    span:before { content: "4"; color:green; }
-.cell[data-value="8"]    span:before { content: "8"; color:purple; }
-.cell[data-value="16"]   span:before { content: "16"; color:pink; }
-.cell[data-value="32"]   span:before { content: "32"; color:brown; }
-.cell[data-value="64"]   span:before { content: "64"; color:orange; }
-.cell[data-value="128"]  span:before { content: "128"; color:teal; }
-.cell[data-value="256"]  span:before { content: "256"; color:lime; }
-.cell[data-value="512"]  span:before { content: "512"; color:violet; }
-.cell[data-value="1024"] span:before { content: "1024"; color:gray; }
-.cell[data-value="2048"] span:before { content: "2048"; color:white; }
+.cell[data-value="0"] { background-color: #eee; }
 
-.cell.moving-cell { position: absolute; border: none; }
+.cell[data-value="2"]    span:before { content: "2"; color:#d39b7c; }
+.cell[data-value="4"]    span:before { content: "4"; color:#cdb56a; }
+.cell[data-value="8"]    span:before { content: "8"; color:#c8c75b; }
+.cell[data-value="16"]   span:before { content: "16"; color:#94c552; }
+.cell[data-value="32"]   span:before { content: "32"; color:#50c55f; }
+.cell[data-value="64"]   span:before { content: "64"; color:#55c6a1; }
+.cell[data-value="128"]  span:before { content: "128"; color:#5db2c9; }
+.cell[data-value="256"]  span:before { content: "256"; color:#6376cb; }
+.cell[data-value="512"]  span:before { content: "512"; color:#a468cd; }
+.cell[data-value="1024"] span:before { content: "1024"; color:#ce6bc8; }
+.cell[data-value="2048"] span:before { content: "2048"; color:#cb6462; }
+
+div.cell { position: absolute; border-color:#444; }
+
+#controls { text-align: center; margin: 6px 0; }
+
+#score { margin: 0 10px; font-weight: bold;}

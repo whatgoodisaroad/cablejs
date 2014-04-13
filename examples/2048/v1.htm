@@ -1,0 +1,90 @@
+<html>
+  <head>
+    <title>2048 Cable</title>
+    <link 
+      rel="stylesheet" 
+      href="../bower_components/bootstrap/dist/css/bootstrap.min.css" />
+    <link 
+      rel="stylesheet" 
+      href="style.css" />
+  </head>
+  <body>
+    <div id="main">
+      <div id="grid"></div>
+      
+      <div id="controls">
+        <input id="reset" type="button" value="Reset" />
+        <span id="score"></span>
+      </div>
+
+    </div>
+    <script src="../../dist/cable.dev.js"></script>
+    <script>
+      Cable.define({
+        $:Cable.library("../bower_components/jquery/dist/jquery.min.js"),
+
+        render:{
+          jade:Cable.library("../bower_components/jade/jade.js"),
+          template:Cable.text("grid.jade"),
+
+          grid:function($, jade, template, state) {
+            $("#grid").html(jade.render(template(), state()));
+          },
+
+          over:function($, gameOver, won) {
+            if (gameOver() || won()) {
+              $(".cell").animate({ opacity:0.5 });
+              setTimeout(
+                function() {
+                  alert(gameOver() ? "Game over" : "You win!");
+                },
+                100
+              );
+            }
+          },
+
+          showScore:Cable.template("#score", "Score: {{score}}")
+        },
+
+        direction:function($, define) {
+          define(function(event) {
+            $(document).on("keyup", function(e) {
+              switch (e.which) {
+                case 37: event("west");   break;
+                case 38: event("north");  break;
+                case 39: event("east");   break;
+                case 40: event("south");  break;
+              }
+            });
+          });
+        },
+
+        game:Cable.library("2048.js"),
+        state:Cable.data({ last:{ created:[], moved:[], merged:[] } }),
+
+        gameOver:function(game, state, result) {
+          result(game.isGameOver(state()));
+        },
+
+        won:function(game, state, result) {
+          result(game.isGameWon(state()));
+        },
+
+        score:function(state, result) { result("" + state().score); },
+
+        restart:Cable.button("#reset"),
+
+        setup:function(init, game, _state, restart) {
+          _state(game.initialize());
+        },
+
+        move:function(game, _state, direction) {
+          if (!game.isGameOver(_state()) && !game.isGameWon(_state())) {
+            _state(game.move(_state(), direction()));
+          }
+        }
+
+      });
+    </script>
+  </body>
+</html>

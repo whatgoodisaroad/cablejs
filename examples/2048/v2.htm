@@ -1,0 +1,157 @@
+<html>
+  <head>
+    <title>2048 Cable</title>
+    <link 
+      rel="stylesheet" 
+      href="../bower_components/bootstrap/dist/css/bootstrap.min.css" />
+    <link 
+      rel="stylesheet" 
+      href="style.css" />
+  </head>
+  <body>
+    <div id="main">
+      <div id="grid"></div>
+      
+      <div id="controls">
+        <input id="reset" type="button" value="Reset" />
+        <span id="score"></span>
+      </div>
+
+    </div>
+    <script src="../../dist/cable.dev.js"></script>
+    <script>
+      Cable.define({
+        $:Cable.library("../bower_components/jquery/dist/jquery.min.js"),
+
+        render:{
+          jade:Cable.library("../bower_components/jade/jade.js"),
+          template:Cable.text("grid.jade"),
+
+          grid:function($, jade, template, game, init) {
+            $("#grid").html(jade.render(template(), game.blank()));
+          },
+
+          restartCells:function($, restart) {
+            $("div.cell").remove();
+          },
+
+          over:function($, gameOver, won) {
+            if (gameOver() || won()) {
+              $(".cell").animate({ opacity:0.5 });
+              setTimeout(
+                function() {
+                  alert(gameOver() ? "Game over" : "You win!");
+                },
+                100
+              );
+            }
+          },
+
+          create:function($, last_create) {
+            $("<div><span/></div>")
+              .addClass("cell moving-cell")
+              .css({
+                left:100 * last_create().column,
+                top:99 * last_create().row 
+              })
+              .attr({
+                "data-value":last_create().value,
+                "data-loc":last_create().row + "x" + last_create().column,
+                "data-step":last_create().step
+              })
+              .appendTo("#main");
+          },
+          move:function($, last_move) {
+            var 
+              loc1 = last_move().row1 + "x" + last_move().column1,
+              loc2 = last_move().row2 + "x" + last_move().column2;
+
+            $(".moving-cell[data-loc='" + loc1 + "']" + 
+                          "[data-step!='" + last_move().step + "']")
+              .attr({ 
+                "data-loc":loc2,
+                "data-step":last_move().step
+              })
+              .animate(
+                { left:100 * last_move().column2, top:99 * last_move().row2 },
+                50
+              );
+          },
+          merge:function($, last_merge) {
+            var 
+              loc1 = last_merge().row1 + "x" + last_merge().column1,
+              loc2 = last_merge().row2 + "x" + last_merge().column2;
+
+            $(".moving-cell[data-loc='" + loc1 + "']" + 
+                          "[data-step!='" + last_merge().step + "']")
+              .attr({ "data-step":last_merge().step })
+              .animate(
+                { left:100 * last_merge().column2, top:99 * last_merge().row2 },
+                50,
+                function() { $(this).remove(); }
+              );
+
+            $(".moving-cell[data-loc='" + loc2 + "']")
+              .attr({ 
+                "data-value":last_merge().value,
+                "data-step":last_merge().step
+              });
+          },
+
+          showScore:Cable.template("#score", "Score: {{score}}")
+        },
+
+        direction:function($, define) {
+          define(function(event) {
+            $(document).on("keyup", function(e) {
+              switch (e.which) {
+                case 37: event("west");   break;
+                case 38: event("north");  break;
+                case 39: event("east");   break;
+                case 40: event("south");  break;
+              }
+            });
+          });
+        },
+
+        game:Cable.library("2048.js"),
+        state:Cable.data({ last:{ created:[], moved:[], merged:[] } }),
+
+        gameOver:function(game, state, result) {
+          result(game.isGameOver(state()));
+        },
+
+        won:function(game, state, result) {
+          result(game.isGameWon(state()));
+        },
+
+        score:function(state, result) { result("" + state().score); },
+
+        last:{
+          create:function(state, result) { 
+            state().last.created.forEach(result);
+          },
+          move:function(state, result) {
+            state().last.moved.forEach(result);
+          },
+          merge:function(state, result) {
+            state().last.merged.forEach(result);
+          }
+        },
+
+        restart:Cable.button("#reset"),
+
+        setup:function(init, game, _state, restart) {
+          _state(game.initialize());
+        },
+
+        move:function(game, _state, direction) {
+          if (!game.isGameOver(_state()) && !game.isGameWon(_state())) {
+            _state(game.move(_state(), direction()));
+          }
+        }
+
+      });
+    </script>
+  </body>
+</html>
