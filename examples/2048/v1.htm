@@ -16,12 +16,51 @@
         <input id="reset" type="button" value="Reset" />
         <span id="score"></span>
       </div>
-
     </div>
     <script src="../../dist/cable.dev.js"></script>
     <script>
       Cable.define({
         $:Cable.library("../bower_components/jquery/dist/jquery.min.js"),
+        game:Cable.library("2048.js"),
+
+        direction:function($, define) {
+          define(function(event) {
+            $(document).on("keyup", function(e) {
+              switch (e.which) {
+                case 37: event("west");   break;
+                case 38: event("north");  break;
+                case 39: event("east");   break;
+                case 40: event("south");  break;
+              }
+            });
+          });
+        },
+
+        restart:Cable.button("#reset"),
+        
+        state:Cable.data(null),
+
+        setup:function(init, game, _state, restart) {
+          _state(game.initialize());
+        },
+
+        move:function(game, _state, direction) {
+          if (!game.isGameOver(_state()) && !game.isGameWon(_state())) {
+            _state(game.move(_state(), direction()));
+          }
+        },
+
+        gameOver:function(game, state, result) {
+          result(game.isGameOver(state()));
+        },
+
+        won:function(game, state, result) {
+          result(game.isGameWon(state()));
+        },
+
+        score:function(state, result) {
+          result("" + state().score);
+        },
 
         render:{
           jade:Cable.library("../bower_components/jade/jade.js"),
@@ -41,48 +80,13 @@
                 100
               );
             }
+            else {
+              $(".cell").animate({ opacity:1 });
+            }
           },
 
           showScore:Cable.template("#score", "Score: {{score}}")
         },
-
-        direction:function($, define) {
-          define(function(event) {
-            $(document).on("keyup", function(e) {
-              switch (e.which) {
-                case 37: event("west");   break;
-                case 38: event("north");  break;
-                case 39: event("east");   break;
-                case 40: event("south");  break;
-              }
-            });
-          });
-        },
-
-        game:Cable.library("2048.js"),
-        state:Cable.data({ last:{ created:[], moved:[], merged:[] } }),
-
-        gameOver:function(game, state, result) {
-          result(game.isGameOver(state()));
-        },
-
-        won:function(game, state, result) {
-          result(game.isGameWon(state()));
-        },
-
-        score:function(state, result) { result("" + state().score); },
-
-        restart:Cable.button("#reset"),
-
-        setup:function(init, game, _state, restart) {
-          _state(game.initialize());
-        },
-
-        move:function(game, _state, direction) {
-          if (!game.isGameOver(_state()) && !game.isGameWon(_state())) {
-            _state(game.move(_state(), direction()));
-          }
-        }
 
       });
     </script>

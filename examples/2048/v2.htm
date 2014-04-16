@@ -22,6 +22,58 @@
     <script>
       Cable.define({
         $:Cable.library("../bower_components/jquery/dist/jquery.min.js"),
+        game:Cable.library("2048.js"),
+
+        direction:function($, define) {
+          define(function(event) {
+            $(document).on("keyup", function(e) {
+              switch (e.which) {
+                case 37: event("west");   break;
+                case 38: event("north");  break;
+                case 39: event("east");   break;
+                case 40: event("south");  break;
+              }
+            });
+          });
+        },
+        restart:Cable.button("#reset"),
+        
+        state:Cable.data(null),
+
+        setup:function(init, game, _state, restart, _render_clear) {
+          _render_clear(!_render_clear());
+          _state(game.initialize());
+        },
+
+        move:function(game, _state, direction) {
+          if (!game.isGameOver(_state()) && !game.isGameWon(_state())) {
+            _state(game.move(_state(), direction()));
+          }
+        },
+
+        gameOver:function(game, state, result) {
+          result(game.isGameOver(state()));
+        },
+
+        won:function(game, state, result) {
+          result(game.isGameWon(state()));
+        },
+
+        score:function(state, result) {
+          result("" + state().score);
+        },
+
+        last:{
+          create:function(state, result) { 
+            state().last.created.forEach(result);
+          },
+          move:function(state, result) {
+            state().last.moved.forEach(result);
+          },
+          merge:function(state, result) {
+            state().last.merged.forEach(result);
+          }
+        },
 
         render:{
           jade:Cable.library("../bower_components/jade/jade.js"),
@@ -31,7 +83,8 @@
             $("#grid").html(jade.render(template(), game.blank()));
           },
 
-          restartCells:function($, restart) {
+          clear:Cable.data(false),
+          clearCells:function($, clear) {
             $("div.cell").remove();
           },
 
@@ -99,56 +152,6 @@
           },
 
           showScore:Cable.template("#score", "Score: {{score}}")
-        },
-
-        direction:function($, define) {
-          define(function(event) {
-            $(document).on("keyup", function(e) {
-              switch (e.which) {
-                case 37: event("west");   break;
-                case 38: event("north");  break;
-                case 39: event("east");   break;
-                case 40: event("south");  break;
-              }
-            });
-          });
-        },
-
-        game:Cable.library("2048.js"),
-        state:Cable.data({ last:{ created:[], moved:[], merged:[] } }),
-
-        gameOver:function(game, state, result) {
-          result(game.isGameOver(state()));
-        },
-
-        won:function(game, state, result) {
-          result(game.isGameWon(state()));
-        },
-
-        score:function(state, result) { result("" + state().score); },
-
-        last:{
-          create:function(state, result) { 
-            state().last.created.forEach(result);
-          },
-          move:function(state, result) {
-            state().last.moved.forEach(result);
-          },
-          merge:function(state, result) {
-            state().last.merged.forEach(result);
-          }
-        },
-
-        restart:Cable.button("#reset"),
-
-        setup:function(init, game, _state, restart) {
-          _state(game.initialize());
-        },
-
-        move:function(game, _state, direction) {
-          if (!game.isGameOver(_state()) && !game.isGameWon(_state())) {
-            _state(game.move(_state(), direction()));
-          }
         }
 
       });

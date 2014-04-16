@@ -2,7 +2,6 @@
   width: 400px;
   margin:50px auto;
   position: relative;
-
 }
 
 table {
@@ -21,9 +20,7 @@ table {
   width:92px;
   height:92px;
   font-weight: bold;
-
   border-radius: 8px;
-
   background-color: #fff;
 }
 
@@ -44,5 +41,4 @@ table {
 div.cell { position: absolute; border-color:#444; }
 
 #controls { text-align: center; margin: 6px 0; }
-
 #score { margin: 0 10px; font-weight: bold;}
