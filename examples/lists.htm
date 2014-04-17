@@ -1,0 +1,39 @@
+<html>
+  <head><title>Cable</title></head>
+  <body>
+    <script src="../dist/cable.min.js"></script>
+    <script>
+      Cable.define({
+        $:Cable.library("bower_components/jquery/dist/jquery.min.js"),
+        us:Cable.library("bower_components/underscore/underscore.js"),
+
+        quakeData:Cable.json(function(init, result) {
+          result("http://api.geonames.org/earthquakesJSON?north=44.1&south=-9.9&east=-22.4&west=55.2&username=demo");
+        }),
+
+        // getDataFromNetwork()
+        //   .skip(10)
+        //   .take(5)
+        //   .map({ s -> return s + " transformed" })
+        //   .subscribe({ println "onNext => " + it })
+        
+        quake:function(us, quakeData, result) {
+          us.chain(quakeData().earthquakes)
+            .drop(2)                // .skip(10)
+            .take(3)                // .take(5)
+            .map(function(e) {      // .map(...)
+              return [
+                "Magnitude",
+                e.magnitude,
+                "on",
+                new Date(e.datetime).toDateString()
+              ].join(" ");
+            })
+            .each(result);          // .subscribe(...)
+        },
+
+        log:function(quake) { console.log(quake()); }
+      });
+    </script>
+  </body>
+</html>
