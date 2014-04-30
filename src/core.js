@@ -757,6 +757,7 @@ var evaluators = {
           ].join("");
         }
 
+        var oldDefine = window.define;
         window.define = define;
         try {
           eval(source);
@@ -764,7 +765,7 @@ var evaluators = {
         catch(exc) {
           throw "Failed evaluating library " + name + ": " + exc;
         }
-        delete window.define;
+        window.define = oldDefine;
 
         if (name === "$" && $ && $.noConflict) { 
           $.noConflict();

@@ -1,0 +1,27 @@
+<html>
+  <head><title>Cable</title></head>
+  <body>
+    <script src="../bower_components/requirejs/require.js"></script>
+    <script>
+      require.config({
+        paths: {
+            "cable": "../../dist/cable.min",
+            "jquery":"../bower_components/jquery/dist/jquery.min"
+        },
+        shim: {
+          cable:{ exports:"Cable" }
+        }
+      });
+
+      require(["cable", "jquery"], function(Cable, require$) {
+        Cable.define({
+          cable$:Cable.library("../bower_components/jquery/dist/jquery.min.js"),
+
+          test:function(init, cable$) {
+            console.log(cable$, require$);
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

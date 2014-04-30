@@ -1,6 +1,6 @@
 /*.......................................
 . cablejs: By Wyatt Allen, MIT Licenced .
-. 2014-04-13T00:34:23.144Z              .
+. 2014-04-30T22:11:07.856Z              .
 .......................................*/
 "use strict";
 
@@ -756,6 +756,7 @@ var evaluators = {
           ].join("");
         }
 
+        var oldDefine = window.define;
         window.define = define;
         try {
           eval(source);
@@ -763,7 +764,7 @@ var evaluators = {
         catch(exc) {
           throw "Failed evaluating library " + name + ": " + exc;
         }
-        delete window.define;
+        window.define = oldDefine;
 
         if (name === "$" && $ && $.noConflict) { 
           $.noConflict();
