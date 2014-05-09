@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Cable.js by whatgoodisaroad</title>
+    <title>cable.js by whatgoodisaroad</title>
 
     <link rel="stylesheet" href="stylesheets/styles.css">
     <link rel="stylesheet" href="stylesheets/pygment_trac.css">
@@ -15,7 +15,7 @@
   <body>
     <div class="wrapper">
       <header>
-        <h1>Cable.js</h1>
+        <h1>cable.js</h1>
         <p>A different kind of FRP library</p>
 
         <p class="view"><a href="https://github.com/whatgoodisaroad/cablejs">View the Project on GitHub <small>whatgoodisaroad/cablejs</small></a></p>
@@ -46,7 +46,7 @@ that can easily handle constantly changing information and interaction.</p>
 <h2>
 <a name="example" class="anchor" href="#example"><span class="octicon octicon-link"></span></a>Example</h2>
 
-<p>A simple example would be a markdown previewer. We'd like a page where one can 
+<p>Let's build a markdown previewer. We'd like a page where one can 
 write markdown code and have a live-updating preview of the resulting HTML. So,
 we write some elements for the input and the output:</p>
 
@@ -54,8 +54,9 @@ we write some elements for the input and the output:</p>
 &lt;div id="output"&gt;&lt;/div&gt;
 </code></pre>
 
-<p>What remains is to use cable.js to connect the input to the output via a
-markdown compiler.</p>
+<p>Now use cable.js to connect the input to the output via a
+markdown compiler. We define some libraries that we'll use and the text-area,
+and write a function that connects them together by declaring argument names that match those resources.</p>
 
 <pre><code>Cable.define({
   $:Cable.library("jquery.min.js"),
@@ -71,6 +72,9 @@ markdown compiler.</p>
 <p>This is all the code needed to have a live updating preview. It's 
 vanilla JavaScript running in strict mode: no fake pseudo-JS syntax that needs 
 to be pre-processed. No magic markup tags.</p>
+
+<h2>
+<a name="example" class="anchor" href="#example"><span class="octicon octicon-link"></span></a>Onward</h2>
 
 <p>Cable can do much more. There are a number of different kinds of nodes which can
 be added to the graph, including different kinds of events, data-sources, 
