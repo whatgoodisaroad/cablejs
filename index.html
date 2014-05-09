@@ -29,9 +29,6 @@
       </header>
       <section>
         <h1>
-<a name="cablejs" class="anchor" href="#cablejs"><span class="octicon octicon-link"></span></a>cable.js</h1>
-
-<p>An effect system and FRP runtime for JavaScript</p>
 
 <p><img src="https://raw.githubusercontent.com/whatgoodisaroad/cablejs/master/assets/cablejs-400x192.png" alt=""></p>
 
@@ -71,65 +68,22 @@ markdown compiler.</p>
 });
 </code></pre>
 
-<p>That's it! This is all the code needed to have a live updating preview. It's 
+<p>This is all the code needed to have a live updating preview. It's 
 vanilla JavaScript running in strict mode: no fake pseudo-JS syntax that needs 
 to be pre-processed. No magic markup tags.</p>
-
-<p>A working example of this previewer can be found in <code>examples/markdown.htm</code> in 
-the repository. Consult the <em>Building</em> section of the readme for help running 
-the example.</p>
 
 <p>Cable can do much more. There are a number of different kinds of nodes which can
 be added to the graph, including different kinds of events, data-sources, 
 synthetic-data-sources, effects, libraries and cable-modules. Consult the 
 examples and API document for more. A tutorial is coming soon.</p>
 
-<h2>
-<a name="api" class="anchor" href="#api"><span class="octicon octicon-link"></span></a>API</h2>
+<p>
+  <ul>
+    <li><a href="https://github.com/whatgoodisaroad/cablejs/wiki/Tutorial">Tutorial</a></li>
+    <li><a href="https://github.com/whatgoodisaroad/cablejs/wiki/API-Documentation">API Documentation</a></li>
+  </ul>
+</p>
 
-<p>The API is documented <a href="https://github.com/whatgoodisaroad/cablejs/wiki/API-Documentation">in the wiki</a>.</p>
-
-<h2>
-<a name="building" class="anchor" href="#building"><span class="octicon octicon-link"></span></a>Building</h2>
-
-<p>To download and build, you'll need npm and git.</p>
-
-<pre><code># download:
-
-git clone git@github.com:whatgoodisaroad/cablejs.git
-cd cablejs
-
-# install dependencies and build:
-
-npm install
-grunt build
-
-# download example dependencies:
-
-cd examples
-bower install
-</code></pre>
-
-<h2>
-<a name="roadmap" class="anchor" href="#roadmap"><span class="octicon octicon-link"></span></a>Roadmap</h2>
-
-<ul>
-<li>☑ Functioning core system.</li>
-<li>☑ Builds and runs in strict mode.</li>
-<li>☑ Functioning examples.</li>
-<li>☑ Functioning cyclic dependency graphs.</li>
-<li>☑ Module loader is AMD compliant.</li>
-<li>☑ Write API docs.</li>
-<li>☑ Streamline event definition syntax.</li>
-<li>☑ Enable subdefinition syntax for library-dependnat nodes</li>
-<li>☑ Alias support.</li>
-<li>☑ Write unit tests.</li>
-<li>☐ Write <em>more</em> unit tests.</li>
-<li>☐ Write tutorial.</li>
-<li>☐ Implement tools for debugging the dependency graph (via <code>Cable._debug()</code>).</li>
-<li>☐ Make the dependency graph more plastic (i.e. reconfigurable).</li>
-<li>☐ Add history sensitivity decorations.</li>
-</ul>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/whatgoodisaroad">whatgoodisaroad</a></p>
