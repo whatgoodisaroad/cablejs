@@ -251,7 +251,7 @@ function loadModules(fn) {
 }
 
 //  A collection of installer functions for each type of node. The type can be 
-//  determined up-front, but a apecialized installer creates the actual node for
+//  determined up-front, but a specialized installer creates the actual node for
 //  the graph.
 var install = {
   data:function(name, obj, scope) {
