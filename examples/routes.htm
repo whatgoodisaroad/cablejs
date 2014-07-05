@@ -1,0 +1,30 @@
+<html>
+  <head><title>Cable</title></head>
+  <body>
+    <script src="../dist/cable.dev.js"></script>
+    <script>
+      Cable.define({
+        $:Cable.library("bower_components/jquery/dist/jquery.min.js"),
+        hash:Cable.hash(),
+        router:Cable.router([ 
+          "admin/:action/:id",
+          ":controller/:action/:id"
+        ]),
+        
+        log:function(router) {
+          if (router()) {
+            console.log(router());
+          }
+          else {
+            console.log(404);
+          }
+        },
+
+        log_controller:function(router_controller) {
+          console.log("controller", router_controller());
+        }
+
+      });
+    </script>
+  </body>
+</html>
