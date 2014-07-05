@@ -1,6 +1,6 @@
 /*.......................................
 . cablejs: By Wyatt Allen, MIT Licenced .
-. 2014-07-05T04:11:27.234Z              .
+. 2014-07-05T04:19:59.973Z              .
 .......................................*/
 "use strict";
 
@@ -1215,7 +1215,7 @@ Cable.router = function(routes) {
       .split("/");
 
     for (var cidx = 0; cidx < components.length; ++cidx) {
-      if (/^:/.test(components[cidx]) && 
+      if (/^:/.test(components[cidx]) &&
           terms.indexOf(components[cidx].substring(1)) == -1
       ) {
         terms.push(components[cidx].substring(1));
@@ -1228,12 +1228,12 @@ Cable.router = function(routes) {
     hash:Cable.hash(),
     main:Cable.data(null),
     route:Cable.withArgs(
-      ["hash", "_main", "_routeIndex"], 
+      ["hash", "_main", "_routeIndex"],
       function(hash, _main, _routeIndex) {
 
         // Try to match each route.
         for (var ridx = 0; ridx < routes.length; ++ridx) {
-          var 
+          var
             routeTerms = routes[ridx]
               .split("/"),
             hashTerms = hash()
@@ -1269,10 +1269,10 @@ Cable.router = function(routes) {
         _routeIndex(-1);
       }
     ),
-    terms:Cable.withArgs(
-      ["main"].concat(terms.map(function(t) { return "_" + t; })), 
+    updateTerms:Cable.withArgs(
+      ["main"].concat(terms.map(function(t) { return "_terms_" + t; })),
       function(route) {
-        var 
+        var
           updated = terms.slice(0),
           obj = route();
 
@@ -1292,8 +1292,9 @@ Cable.router = function(routes) {
     )
   };
 
+  obj.terms = {};
   for (var tidx = 0; tidx < terms.length; ++tidx) {
-    obj[terms[tidx]] = Cable.data(null);
+    obj.terms[terms[tidx]] = Cable.data(null);
   }
 
   return obj;

@@ -10,7 +10,7 @@
           "admin/:action/:id",
           ":controller/:action/:id"
         ]),
-        
+
         log:function(router) {
           if (router()) {
             console.log(router());
@@ -20,8 +20,8 @@
           }
         },
 
-        log_controller:function(router_controller) {
-          console.log("controller", router_controller());
+        log_controller:function(router_terms_controller) {
+          console.log("controller", router_terms_controller());
         }
 
       });

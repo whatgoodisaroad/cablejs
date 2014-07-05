@@ -268,8 +268,8 @@ Cable.router = function(routes) {
         _routeIndex(-1);
       }
     ),
-    terms:Cable.withArgs(
-      ["main"].concat(terms.map(function(t) { return "_" + t; })),
+    updateTerms:Cable.withArgs(
+      ["main"].concat(terms.map(function(t) { return "_terms_" + t; })),
       function(route) {
         var
           updated = terms.slice(0),
@@ -291,8 +291,9 @@ Cable.router = function(routes) {
     )
   };
 
+  obj.terms = {};
   for (var tidx = 0; tidx < terms.length; ++tidx) {
-    obj[terms[tidx]] = Cable.data(null);
+    obj.terms[terms[tidx]] = Cable.data(null);
   }
 
   return obj;
