@@ -1,6 +1,6 @@
 /*.......................................
 . cablejs: By Wyatt Allen, MIT Licenced .
-. 2014-07-05T00:13:37.148Z              .
+. 2014-07-05T02:02:06.270Z              .
 .......................................*/
 "use strict";
 
@@ -968,9 +968,8 @@ Cable.pack = function(args) {
 
   var aliases = args.slice(0);
   aliases.splice(0, 0, "result");
-  fn.argAliases = aliases
-
-  return fn;
+  
+  return Cable.withArgs(aliases, fn);
 };
 
 //  Declare a stateful integer counter, Useful for creating unique ids on the 
@@ -989,6 +988,19 @@ Cable.alias = function(ref) {
   return {
     type:"alias",
     reference:ref
+  };
+};
+
+Cable.repeat = function(interval, values) {
+  return {
+    interval:Cable.interval(interval),
+    index:Cable.data(-1),
+    increment:function(interval, _index) {
+      _index((_index() + 1) % values.length);
+    },
+    main:function(index, result) {
+      result(values[index()]);
+    }
   };
 };
 
@@ -1136,7 +1148,7 @@ Cable.decorators = function() {
 Cable.chain = function(source) {
   var
     links = [],
-    methods = "take drop map filter".split(" "),
+    methods = "take drop map filter reduce reduceRight contains max min sortBy groupBy size flatten uniq".split(" "),
     compute = function(data, _) {
       var chain = _.chain(data());
 
@@ -1166,7 +1178,6 @@ Cable.chain = function(source) {
           }
         );
       }
-
     };
 
   for (var idx = 0; idx < methods.length; ++idx) {

@@ -142,9 +142,8 @@ Cable.pack = function(args) {
 
   var aliases = args.slice(0);
   aliases.splice(0, 0, "result");
-  fn.argAliases = aliases
-
-  return fn;
+  
+  return Cable.withArgs(aliases, fn);
 };
 
 //  Declare a stateful integer counter, Useful for creating unique ids on the 
@@ -163,5 +162,18 @@ Cable.alias = function(ref) {
   return {
     type:"alias",
     reference:ref
+  };
+};
+
+Cable.repeat = function(interval, values) {
+  return {
+    interval:Cable.interval(interval),
+    index:Cable.data(-1),
+    increment:function(interval, _index) {
+      _index((_index() + 1) % values.length);
+    },
+    main:function(index, result) {
+      result(values[index()]);
+    }
   };
 };

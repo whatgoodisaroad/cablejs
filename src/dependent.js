@@ -147,7 +147,7 @@ Cable.decorators = function() {
 Cable.chain = function(source) {
   var
     links = [],
-    methods = "take drop map filter".split(" "),
+    methods = "take drop map filter reduce reduceRight contains max min sortBy groupBy size flatten uniq".split(" "),
     compute = function(data, _) {
       var chain = _.chain(data());
 
