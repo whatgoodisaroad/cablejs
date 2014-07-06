@@ -5,24 +5,11 @@
     <script>
       Cable.define({
         $:Cable.library("bower_components/jquery/dist/jquery.min.js"),
-        hash:Cable.hash(),
+
         router:Cable.router([ 
           "admin/:action/:id",
           ":controller/:action/:id"
         ]),
-
-        log:function(router) {
-          if (router()) {
-            console.log(router());
-          }
-          else {
-            console.log(404);
-          }
-        },
-
-        log_controller:function(router_params_controller) {
-          console.log("controller", router_params_controller());
-        },
 
         view:Cable.view("router", {
           user:{
@@ -33,7 +20,13 @@
               console.log("Viewing", router_params_id());
             }
           }
-        })
+        }),
+
+        log404:function(router) {
+          if (!router()) {
+            console.log(404);
+          }
+        }
       });
     </script>
   </body>
