@@ -177,3 +177,54 @@ Cable.repeat = function(interval, values) {
     }
   };
 };
+
+//  View controller actions based on some router. The router argument should be
+//  the name of a node which produces a stream of objects where each object has
+//  two properties: controller and action. These are used to determine the 
+//  action to invoke. A suitable router can be generated with Cable.router().
+Cable.view = function(router, controllers) {
+
+  //  The controllers object is a 2-layer nested object of controllers and 
+  //  actions where each action is an effect function. We need to translate 
+  //  these actions into defineable nodes. Each action depends on a "request"
+  //  node. These nodes need to befined in the appropriate scope so that they
+  //  trigger the correct action.
+
+  var obj = { };
+
+  //  For each controller:
+  for (var controller in controllers) {
+    if (controllers.hasOwnProperty(controller)) {
+      obj[controller] = { };
+
+      //  For each action in the controller.
+      for (var action in controllers[controller]) {
+        (function(controller, action) {
+
+          obj[controller][action] = {
+
+            //  Create a synthetic node which produces a result only when this
+            //  action should be run.
+            request:Cable.withArgs(
+              [router, "respond"],
+              function(route, respond) {
+                if (
+                  route().controller === controller && 
+                  route().action === action
+                ) {
+                  respond(route());
+                }
+              }
+            ),
+
+            //  Define the action as an effect.
+            main:controllers[controller][action]
+          };
+
+        })(controller, action);
+      }
+    }
+  }
+
+  return obj;
+};

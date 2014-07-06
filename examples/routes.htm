@@ -20,10 +20,20 @@
           }
         },
 
-        log_controller:function(router_terms_controller) {
-          console.log("controller", router_terms_controller());
-        }
+        log_controller:function(router_params_controller) {
+          console.log("controller", router_params_controller());
+        },
 
+        view:Cable.view("router", {
+          user:{
+            home:function(request) {
+              console.log("Home");
+            },
+            view:function(request, router_params_id) {
+              console.log("Viewing", router_params_id());
+            }
+          }
+        })
       });
     </script>
   </body>

@@ -345,19 +345,40 @@ var install = {
     };
   },
 
+  // Declare a node scope.
   scope:function(name, obj, scope) {
+
+    //  Take the scope definition and translate it into a series of normal node
+    //  definitions with a scoping option.
 
     var newObj = { };
 
+    //  Nodes with simple names in the definition object need their names 
+    //  translated into the fully qualified, namespace-prefixed version. Nodes
+    //  named "main" take the same name of the namespace.
     each(obj, function(subobj, subname) {
       var newName = subname === "main" ? name : name + "_" + subname;
       newObj[newName] = subobj;
     });
 
-    var
-      namespace = scope.chain.map(function(n) { return n + "_"; }).join("_"),
-      newChain = scope.chain.concat([ name.slice(namespace.length) ]);
+    var 
 
+      //  Determine the namespace based on the scope. If the scope chain is 
+      //  empty, then the namespace is the empty string.
+      namespace = scope.chain.length ?
+        namespace = scope.chain
+          .map(function(n) { return n; })
+          .join("_") + "_" :
+        "",
+
+      //  Compute the new scope chain by appending the new link to the chain.
+      //  The new link is the current scope's name *without* the namespace 
+      //  prefix.
+      newChain = scope.chain.concat([ 
+        name.slice(namespace.length) 
+      ]);
+
+    //  Now that the scope has been translated, defer to the normal define.
     Cable.define(
       newObj, { 
         reify:false, 

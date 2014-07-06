@@ -1,6 +1,6 @@
 /*.......................................
 . cablejs: By Wyatt Allen, MIT Licenced .
-. 2014-07-05T04:19:59.973Z              .
+. 2014-07-06T05:47:27.327Z              .
 .......................................*/
 "use strict";
 
@@ -344,19 +344,40 @@ var install = {
     };
   },
 
+  // Declare a node scope.
   scope:function(name, obj, scope) {
+
+    //  Take the scope definition and translate it into a series of normal node
+    //  definitions with a scoping option.
 
     var newObj = { };
 
+    //  Nodes with simple names in the definition object need their names 
+    //  translated into the fully qualified, namespace-prefixed version. Nodes
+    //  named "main" take the same name of the namespace.
     each(obj, function(subobj, subname) {
       var newName = subname === "main" ? name : name + "_" + subname;
       newObj[newName] = subobj;
     });
 
-    var
-      namespace = scope.chain.map(function(n) { return n + "_"; }).join("_"),
-      newChain = scope.chain.concat([ name.slice(namespace.length) ]);
+    var 
 
+      //  Determine the namespace based on the scope. If the scope chain is 
+      //  empty, then the namespace is the empty string.
+      namespace = scope.chain.length ?
+        namespace = scope.chain
+          .map(function(n) { return n; })
+          .join("_") + "_" :
+        "",
+
+      //  Compute the new scope chain by appending the new link to the chain.
+      //  The new link is the current scope's name *without* the namespace 
+      //  prefix.
+      newChain = scope.chain.concat([ 
+        name.slice(namespace.length) 
+      ]);
+
+    //  Now that the scope has been translated, defer to the normal define.
     Cable.define(
       newObj, { 
         reify:false, 
@@ -1004,6 +1025,57 @@ Cable.repeat = function(interval, values) {
   };
 };
 
+//  View controller actions based on some router. The router argument should be
+//  the name of a node which produces a stream of objects where each object has
+//  two properties: controller and action. These are used to determine the 
+//  action to invoke. A suitable router can be generated with Cable.router().
+Cable.view = function(router, controllers) {
+
+  //  The controllers object is a 2-layer nested object of controllers and 
+  //  actions where each action is an effect function. We need to translate 
+  //  these actions into defineable nodes. Each action depends on a "request"
+  //  node. These nodes need to befined in the appropriate scope so that they
+  //  trigger the correct action.
+
+  var obj = { };
+
+  //  For each controller:
+  for (var controller in controllers) {
+    if (controllers.hasOwnProperty(controller)) {
+      obj[controller] = { };
+
+      //  For each action in the controller.
+      for (var action in controllers[controller]) {
+        (function(controller, action) {
+
+          obj[controller][action] = {
+
+            //  Create a synthetic node which produces a result only when this
+            //  action should be run.
+            request:Cable.withArgs(
+              [router, "respond"],
+              function(route, respond) {
+                if (
+                  route().controller === controller && 
+                  route().action === action
+                ) {
+                  respond(route());
+                }
+              }
+            ),
+
+            //  Define the action as an effect.
+            main:controllers[controller][action]
+          };
+
+        })(controller, action);
+      }
+    }
+  }
+
+  return obj;
+};
+
 //  Lift a textbox into the graph.
 Cable.textbox = function(selector) {
   return Cable.withArgs(["$", "define"], function($, define) {
@@ -1270,7 +1342,7 @@ Cable.router = function(routes) {
       }
     ),
     updateTerms:Cable.withArgs(
-      ["main"].concat(terms.map(function(t) { return "_terms_" + t; })),
+      ["main"].concat(terms.map(function(t) { return "_params_" + t; })),
       function(route) {
         var
           updated = terms.slice(0),
@@ -1292,9 +1364,9 @@ Cable.router = function(routes) {
     )
   };
 
-  obj.terms = {};
+  obj.params = {};
   for (var tidx = 0; tidx < terms.length; ++tidx) {
-    obj.terms[terms[tidx]] = Cable.data(null);
+    obj.params[terms[tidx]] = Cable.data(null);
   }
 
   return obj;
