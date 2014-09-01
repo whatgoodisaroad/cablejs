@@ -1,6 +1,6 @@
 /*.......................................
 . cablejs: By Wyatt Allen, MIT Licenced .
-. 2014-07-06T05:47:27.327Z              .
+. 2014-09-01T04:52:34.626Z              .
 .......................................*/
 "use strict";
 
@@ -1314,6 +1314,7 @@ Cable.router = function(routes) {
             fail = false;
 
           if (routeTerms.length != hashTerms.length) {
+            fail = true;
             break;
           }
 

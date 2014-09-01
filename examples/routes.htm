@@ -16,14 +16,14 @@
             home:function(request) {
               console.log("Home");
             },
-            view:function(request, router_params_id) {
-              console.log("Viewing", router_params_id());
+            view:function(request) {
+              console.log("Viewing", request().id);
             }
           }
         }),
 
-        log404:function(router) {
-          if (!router()) {
+        log404:function(router_routeIndex) {
+          if (router_routeIndex() === -1) {
             console.log(404);
           }
         }

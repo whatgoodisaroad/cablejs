@@ -241,6 +241,7 @@ Cable.router = function(routes) {
             fail = false;
 
           if (routeTerms.length != hashTerms.length) {
+            fail = true;
             break;
           }
 
