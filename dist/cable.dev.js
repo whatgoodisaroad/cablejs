@@ -1,6 +1,6 @@
 /*.......................................
 . cablejs: By Wyatt Allen, MIT Licenced .
-. 2014-09-01T04:52:34.626Z              .
+. 2014-09-27T22:42:35.924Z              .
 .......................................*/
 "use strict";
 
@@ -395,7 +395,8 @@ var install = {
       in:getFanIn(fn),
       fn:fn,
       scope:scope,
-      defineIndex:getArgNames(fn).indexOf("define")
+      defineIndex:getArgNames(fn).indexOf("define"),
+      isExecuting:false
     };
   },
 
@@ -495,7 +496,12 @@ function reify() {
 
 function executeSubdefinitions() {
   each(graph, function(node, nodeName) {
-    if (node.type === "subdefinition") {
+    if (
+      node.type === "subdefinition" &&
+      !node.isExecuting
+    ) {
+      node.isExecuting = true;
+
       if (allDependenciesAreLibraries(nodeName)) {
         generateIn(nodeName, function(deps) {
           deps.splice(node.defineIndex, 0, function(obj) {
@@ -503,7 +509,7 @@ function executeSubdefinitions() {
             def[nodeName] = obj;
             Cable.define(def, { scope:node.scope });
           });
-
+          
           delete graph[nodeName];
           
           node.fn.apply(window, deps);

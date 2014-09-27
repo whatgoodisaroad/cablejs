@@ -396,7 +396,8 @@ var install = {
       in:getFanIn(fn),
       fn:fn,
       scope:scope,
-      defineIndex:getArgNames(fn).indexOf("define")
+      defineIndex:getArgNames(fn).indexOf("define"),
+      isExecuting:false
     };
   },
 
@@ -496,7 +497,12 @@ function reify() {
 
 function executeSubdefinitions() {
   each(graph, function(node, nodeName) {
-    if (node.type === "subdefinition") {
+    if (
+      node.type === "subdefinition" &&
+      !node.isExecuting
+    ) {
+      node.isExecuting = true;
+
       if (allDependenciesAreLibraries(nodeName)) {
         generateIn(nodeName, function(deps) {
           deps.splice(node.defineIndex, 0, function(obj) {

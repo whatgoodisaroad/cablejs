@@ -1,0 +1,35 @@
+<html>
+  <head><title></title></head>
+  <body>
+    <input type="button" id="b1" value="b1" />
+    <input type="button" id="b2" value="b2" />
+    <ol id="ol"></ol>
+    <script src="../dist/cable.dev.js"></script>
+    <script>
+      Cable.define({
+        $:Cable.library('bower_components/jquery/dist/jquery.min.js'),
+
+        b1:function($, define) {
+          define(Cable.button("#b1"));
+        },
+        
+        b2:Cable.button("#b2"),        
+
+        out1:function($, b1) {
+          $("<li/>")
+            .text("b1:" + (new Date()).toTimeString())
+            .appendTo("#ol");
+        },
+
+        out2:function($, b2) {
+          $("<li/>")
+            .text("b2:" + (new Date()).toTimeString())
+            .appendTo("#ol");
+        },
+
+        test:function(init) { console.log('test'); }
+      });
+
+    </script>
+  </body>
+</html>
