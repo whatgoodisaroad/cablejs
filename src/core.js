@@ -556,7 +556,10 @@ var generators = {
       if (!arguments.length) {
         return graph[name].value;
       }
-      else if (arguments[0] != graph[name].value) {
+      else if (
+        arguments[0] != graph[name].value ||
+        typeof arguments[0] === 'object'
+      ) {
         graph[name].value = arguments[0];
         triggerDownstream(name);
       }

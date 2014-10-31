@@ -1,6 +1,6 @@
 /*.......................................
 . cablejs: By Wyatt Allen, MIT Licenced .
-. 2014-09-27T22:42:35.924Z              .
+. 2014-10-31T04:43:18.906Z              .
 .......................................*/
 "use strict";
 
@@ -509,7 +509,7 @@ function executeSubdefinitions() {
             def[nodeName] = obj;
             Cable.define(def, { scope:node.scope });
           });
-          
+
           delete graph[nodeName];
           
           node.fn.apply(window, deps);
@@ -555,7 +555,10 @@ var generators = {
       if (!arguments.length) {
         return graph[name].value;
       }
-      else if (arguments[0] != graph[name].value) {
+      else if (
+        arguments[0] != graph[name].value ||
+        typeof arguments[0] === 'object'
+      ) {
         graph[name].value = arguments[0];
         triggerDownstream(name);
       }
